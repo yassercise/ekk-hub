@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA0QDm49wVArv6oJA4YNGdRCXDe9OEtkI0",
@@ -12,6 +13,7 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 
 /* ============================================================
    DATA LAYER
@@ -580,6 +582,7 @@ window.addEventListener('load', async () => {
   });
 
   document.getElementById('viewMount').innerHTML = `<div style="padding:40px; color:var(--text-dim); font-size:13px;">Loading your data…</div>`;
+  await signInAnonymously(auth);
   DATA = await Store.loadAll();
   navigate('overview');
 });
