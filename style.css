@@ -243,3 +243,23 @@ nav.main-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2
 .gantt-month-line { position: absolute; top: 34px; bottom: 0; width: 1px; background: var(--card-border); z-index: 1; }
 .gantt-month-label { position: absolute; top: 8px; font-size: 10.5px; font-weight: 700; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; z-index: 3; }
 .gantt-today-line { position: absolute; top: 34px; bottom: 0; width: 2px; background: var(--behind-text); z-index: 2; }
+
+/* ---------- Add-project form ---------- */
+.add-project-form { display: flex; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--card-border); flex-wrap: wrap; }
+.add-project-form select, .add-project-form input { border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-family: 'Manrope', sans-serif; background: #FAFAFD; }
+.add-project-form .name-input { flex: 1.2; min-width: 160px; }
+.add-project-form .period-input { flex: 1; min-width: 120px; }
+.add-project-form button { background: var(--accent); color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 0 18px; border-radius: 10px; transition: background 500ms ease, opacity 150ms ease; }
+.add-project-form button:hover { opacity: 0.88; }
+
+/* ---------- Files (link registry) ---------- */
+.file-remove-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--card-border); background: var(--card); color: var(--text-dim); font-size: 14px; line-height: 1; flex-shrink: 0; }
+.file-remove-btn:hover { background: var(--behind-bg); color: var(--behind-text); border-color: transparent; }
+.file-link { flex: 1; font-weight: 600; font-size: 13.5px; color: var(--text); text-decoration: none; }
+.file-link:hover { color: var(--accent); }
+
+/* ---------- Gantt: elapsed shading + day ticks ---------- */
+.gantt-elapsed { position: absolute; top: 34px; background: rgba(17,17,38,0.035); z-index: 0; pointer-events: none; }
+.gantt-day-tick { position: absolute; top: 20px; font-size: 9.5px; font-weight: 600; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; z-index: 1; }
+
+.todo-project-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }

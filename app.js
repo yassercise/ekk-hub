@@ -19,11 +19,12 @@ const auth = getAuth(fbApp);
    ============================================================ */
 
 const RAW_TASKS_KDR = JSON.parse(`[{"id":"t1","title":"Finalize Launch Video","cat":"Video Production","owner":"Videography","priority":"high","status":"progress","due":"2026-08-02","notes":"","subtasks":[{"id":"s1","text":"Swap vehicle CGI animation","done":true},{"id":"s17860042296393v4","text":"Review Video & Send Feedback","done":false}],"deps":["t1784183589084uznq"],"links":[]},{"id":"t2","title":"Finalize Influencer Selection","cat":"Influencers","owner":"Yasir","priority":"high","status":"progress","due":"2026-07-28","notes":"","subtasks":[{"id":"s178418572598187q","text":"Contact Eman to Inquire on GCC Influencers","done":true},{"id":"s17852206933576hb","text":"Send GCC Influencer Brief to Eman","done":true},{"id":"s1785650674992xkj","text":"Send Full Bahrain Influencer List to Hasan","done":true},{"id":"s1785650690900n9s","text":"Get 5osh Fkra Quotations Approved","done":true}],"deps":[],"links":[]},{"id":"t1784183589084uznq","title":"Secure Brand Prize Sponsorship","cat":"Brand Collaborations","owner":"Yasir","priority":"high","status":"done","due":"2026-08-10","notes":"","subtasks":[{"id":"a1","text":"Send Proposal to Automotive Brands","done":true},{"id":"a2","text":"Meet With Team to Discuss Proposal","done":true},{"id":"a3","text":"Get Confirmation from Teams on Sponsorships","done":true},{"id":"a4","text":"Meet With Teams on Prize Restructure","done":true},{"id":"a5","text":"Confirm New Prize Structure","done":true},{"id":"a6","text":"Create Quotations to Each Brand On Sponsorship","done":true},{"id":"a7","text":"Send Quotation to Suresh for Review & Confirmation With Legal","done":true},{"id":"a8","text":"Send Quotations to Automotive Brands","done":true},{"id":"a9","text":"Receive LPOs from all Brands","done":true}],"deps":[],"links":[]},{"id":"t5","title":"Allign With Automotive Brand on Timeline & Activations","cat":"Brand Collaborations","owner":"Yasir","priority":"high","status":"done","due":"2026-07-16","notes":"Deepal=Platinum, Jetour=Gold, Toyota=Gold, Lexus=Gold, iCAUR=Silver. All raffle sponsors.","subtasks":[{"id":"s1","text":"Have Meeting With All Brands on Timeline","done":true}],"deps":[],"links":[]},{"id":"t7","title":"Setup CRM Email Flow & Database","cat":"Email / CRM","owner":"CRM","priority":"high","status":"progress","due":"2026-08-08","notes":"","subtasks":[{"id":"b1","text":"Send Email to CRM Team to Brief Them on Project","done":true},{"id":"b2","text":"Meet With CRM Team","done":true},{"id":"b3","text":"Contact Digital Solutions to Edit Welcome Email","done":true},{"id":"b4","text":"Edit Welcome Email Content & Send to Sree","done":true},{"id":"b5","text":"Test Registration & Welcome Email","done":true},{"id":"b6","text":"Send Campaign Brief to CRM Team With Visuals, Texts & Overall Details","done":false}],"deps":[],"links":[]},{"id":"t8","title":"Create 1st Pre-Teaser Post","cat":"Pre-Teaser Phase","owner":"Yasir","priority":"high","status":"done","due":"2026-07-09","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t11","title":"Plan & Setup BSC event activation (Aug 14-20)","cat":"Bahrain Sports City","owner":"Yasir","priority":"medium","status":"progress","due":"2026-08-13","notes":"iCAUR exclusive branding at eSports section. Game playable on screens. Possible booth setup.","subtasks":[{"id":"c1","text":"Go to Sports City for Sight Visit","done":false},{"id":"c2","text":"Design BSC event banners","done":false},{"id":"c3","text":"Set up screens and game terminals","done":false},{"id":"c4","text":"Brief Videography Team to Shoot Recap Video","done":false}],"deps":[],"links":[]},{"id":"t13","title":"Brief Creative Team on Designs","cat":"Design","owner":"Yasir","priority":"high","status":"done","due":"2026-07-15","notes":"","subtasks":[{"id":"d1","text":"Meet With Creative Team","done":true},{"id":"d2","text":"Create & Send Detailed Brief to Ismael","done":true},{"id":"d3","text":"Send Creative Brief to Miracle","done":true}],"deps":[],"links":[]},{"id":"t1783939377826t96r","title":"Create 2nd Pre-Teaser Post","cat":"Pre-Teaser Phase","owner":"Yasir","priority":"high","status":"done","due":"2026-07-16","notes":"","subtasks":[{"id":"e1","text":"Create Artwork","done":true},{"id":"e2","text":"Send to Georgiana for Approval","done":true},{"id":"e3","text":"Create Caption","done":true},{"id":"e4","text":"Publish the Post","done":true}],"deps":[],"links":[]},{"id":"t1783939422159rsgh","title":"Create 3rd Pre-Teaser Post","cat":"Pre-Teaser Phase","owner":"Yasir","priority":"low","status":"done","due":"2026-07-23","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t1783939440325eshi","title":"Create 4th Pre-Teaser Post","cat":"Pre-Teaser Phase","owner":"Yasir","priority":"low","status":"done","due":"2026-07-30","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t17839405220978x5t","title":"Publish 1st Teaser Post","cat":"Teaser Phase","owner":"Yasir","priority":"medium","status":"done","due":"2026-08-04","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t1783940566379extm","title":"Publish 2nd Teaser Post","cat":"Teaser Phase","owner":"Yasir","priority":"medium","status":"todo","due":"2026-08-06","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t1783940595862i6ww","title":"Publish 3rd Teaser Post","cat":"Teaser Phase","owner":"Yasir","priority":"medium","status":"todo","due":"2026-08-11","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t178591983618073o5","title":"Teaser Phase Visuals","cat":"Design","owner":"Design Team","priority":"high","status":"done","due":"","notes":"","subtasks":[{"id":"f1","text":"Review & Leave Feedback on Artwork","done":true},{"id":"f2","text":"Request Various Sizes for Artwork","done":true},{"id":"f3","text":"Confirm & Approve Artworks","done":true}],"deps":[],"links":[]},{"id":"t1785220358635oxpx","title":"Main Campaign Visuals","cat":"Design","owner":"Design Team","priority":"high","status":"done","due":"2026-07-30","notes":"","subtasks":[{"id":"g1","text":"Have Meeting With Miracle to Review Visual Concepts","done":true},{"id":"g2","text":"Review With Georgiana & Send Feedback","done":true},{"id":"g3","text":"Inform Miracle to Design Main Visual in Various Formats","done":true},{"id":"g4","text":"Review & Send Feedback for Edits","done":true},{"id":"g5","text":"Confirm & Approve Main Visuals","done":true}],"deps":[],"links":[]},{"id":"t1785918663067rqu8","title":"Khosh Fkra Video","cat":"Influencers","owner":"Yasir","priority":"high","status":"progress","due":"2026-08-10","notes":"","subtasks":[{"id":"h1","text":"Send Supplier Details to Sreejith","done":true},{"id":"h2","text":"Have Meeting With Khosh Fkra Team","done":false}],"deps":[],"links":[]},{"id":"t1785918678350sepr","title":"Gulf Insider Video","cat":"Influencers","owner":"Yasir","priority":"medium","status":"progress","due":"2026-08-10","notes":"","subtasks":[{"id":"i1","text":"Confirm Video Concept","done":true},{"id":"i2","text":"Send Video Feedback to Hasan","done":true},{"id":"i3","text":"Brief Script & Idea With Georgiana","done":true}],"deps":[],"links":[]},{"id":"t1785918693300ctvs","title":"Tekken Master Video","cat":"Influencers","owner":"Yasir","priority":"medium","status":"todo","due":"2026-08-11","notes":"","subtasks":[],"deps":[],"links":[]},{"id":"t1785918861149wbjq","title":"KDR Sports City Media Launch","cat":"Bahrain Sports City","owner":"Corporate Comms","priority":"high","status":"progress","due":"2026-08-10","notes":"","subtasks":[{"id":"j1","text":"Contact Hasan to Arrange for Media Coverage","done":true},{"id":"j2","text":"Receive Media Agency Quotations from Hasan","done":false}],"deps":[],"links":[]},{"id":"t1785919069225rkuk","title":"Teaser Phase Sponsor Ads","cat":"Sponsored Ads","owner":"Yasir","priority":"medium","status":"progress","due":"2026-08-05","notes":"","subtasks":[{"id":"k1","text":"Have Meeting With Digital Ads Team","done":true},{"id":"k2","text":"Create Media Plan & Get Approval","done":true},{"id":"k3","text":"Send Sreejith Media Plan Quotation for PR","done":true},{"id":"k4","text":"Send PR to Marketing Accounts for LPO","done":true},{"id":"k5","text":"Send LPO to Digital Ads Team Alongside Teaser 1 Link","done":true},{"id":"k6","text":"Brief & Discuss Sponsored Ad Audience Change With Georgiana","done":true},{"id":"k7","text":"Send Email Reply on Change to Nada","done":true}],"deps":[],"links":[]},{"id":"t1785919211306x7ln","title":"Terms & Conditions","cat":"Game","owner":"Yasir","priority":"high","status":"progress","due":"","notes":"","subtasks":[{"id":"l1","text":"Review Current Terms & Conditions","done":true},{"id":"l2","text":"Edit Terms & Conditions to Include 3 New Clauses","done":true},{"id":"l3","text":"Review Updated Terms & Conditions With Matthew & Georgiana","done":true},{"id":"l4","text":"Send Updated Document to Legal for Review","done":true},{"id":"l5","text":"Confirm Prize Money Details & Make Edits to Document","done":false},{"id":"l6","text":"Send Final Terms & Conditions to Digital Solutions","done":false}],"deps":[],"links":[]},{"id":"t1785919334521cexw","title":"In-Game Banners (TyrePlus)","cat":"Brand Collaborations","owner":"Yasir","priority":"high","status":"progress","due":"","notes":"","subtasks":[{"id":"m1","text":"Send Banner Selection Document to TyrePlus","done":true},{"id":"m2","text":"Receive Selected Banners & LPO","done":true},{"id":"m3","text":"Send Reference Sizes for Banners & Request Artwork from TyrePlus","done":true},{"id":"m4","text":"Receive 4 Banner Artwork From TyrePlus","done":false},{"id":"m5","text":"Send Banner Artworks to Sree","done":false}],"deps":[],"links":[]},{"id":"t1785919344187hjxf","title":"In-Game Banners (KVL & KPV)","cat":"Brand Collaborations","owner":"Yasir","priority":"high","status":"progress","due":"","notes":"","subtasks":[{"id":"n1","text":"Confirm KVL & KPV Banner Selections","done":true},{"id":"n2","text":"Send Email to Suresh to Create LPO","done":true},{"id":"n3","text":"Create Banner Artwork for KPV","done":false},{"id":"n4","text":"Create Banner Artwork for KVL","done":false}],"deps":[],"links":[]},{"id":"t1785919934428k67w","title":"Landing Page","cat":"Game","owner":"Digital Solutions","priority":"high","status":"progress","due":"","notes":"","subtasks":[{"id":"o1","text":"Review & Approve Concept & Content of Landing Page With Georgiana","done":true},{"id":"o2","text":"Send Content & Assets to Sree for Landing Page","done":false}],"deps":[],"links":[]},{"id":"t1785920002300yvxn","title":"Individual Vehicle Visuals","cat":"Design","owner":"Design Team","priority":"high","status":"progress","due":"","notes":"","subtasks":[{"id":"p1","text":"Review & Leave Feedback on Artwork","done":true},{"id":"p2","text":"Review Updated Artwork With Georgiana","done":false},{"id":"p3","text":"Send Artwork to Each Automotive Brand for Approval","done":false}],"deps":[],"links":[]},{"id":"t1785920254959t22m","title":"Website Banner","cat":"Game","owner":"Digital Solutions","priority":"high","status":"todo","due":"","notes":"","subtasks":[{"id":"q1","text":"Send Main Visual as Landscape to Digital Solutions to Keep as Website Banner","done":false}],"deps":[],"links":[]}]`);
+RAW_TASKS_KDR.forEach(t => { t.projectId = 'racing-game'; });
 
 const RAW_TIMELINE_KDR = JSON.parse(`[{"task":"Weekly build-up post #1 (cryptic)","owner":"Yasir","cat":"Pre-Launch Content","dates":["2026-07-09"]},{"task":"Weekly build-up post #2 (cryptic)","owner":"Yasir","cat":"Pre-Launch Content","dates":["2026-07-16"]},{"task":"Weekly build-up post #3 (cryptic)","owner":"Yasir","cat":"Pre-Launch Content","dates":["2026-07-23"]},{"task":"Weekly build-up post #4 (cryptic)","owner":"Yasir","cat":"Pre-Launch Content","dates":["2026-07-30"]},{"task":"Teaser post #1 — Helmet","owner":"Design Team","cat":"Teaser Phase","dates":["2026-08-04"]},{"task":"Teaser post #2 — Circuit","owner":"Design Team","cat":"Teaser Phase","dates":["2026-08-06"]},{"cat":"Teaser Phase","task":"Teaser post #3 — Tomorrow.","owner":"Design Team","dates":["2026-08-11"]},{"cat":"Launch","task":"Game goes LIVE","owner":"Digital Solutions","dates":["2026-08-12"]},{"task":"Launch video posted — KDR channels","owner":"Yasir","cat":"Launch","dates":["2026-08-12"]},{"task":"KDR launch post","owner":"Design Team","cat":"Launch","dates":["2026-08-12"]},{"task":"Deepal — collab post live","owner":"Corporate Comms","cat":"Brand Collaborations","dates":["2026-08-12"]},{"cat":"Brand Collaborations","task":"Deepal Races Completed With Vehicle Post","owner":"Design Team","dates":["2026-08-19","2026-08-26","2026-09-02","2026-09-09"]},{"task":"Jetour — collab post live","owner":"Corporate Comms","cat":"Brand Collaborations","dates":["2026-08-12"]},{"task":"Jetour Races Completed With Vehicle Post","owner":"Design Team","cat":"Brand Collaborations","dates":["2026-08-19","2026-08-26","2026-09-02","2026-09-09"]},{"task":"iCAUR — collab post live","owner":"Corporate Comms","cat":"Brand Collaborations","dates":["2026-08-12"]},{"cat":"Brand Collaborations","task":"iCAUR Races Completed With Vehicle Post","owner":"Design Team","dates":["2026-08-19","2026-08-26","2026-09-02","2026-09-09"]},{"task":"Toyota — collab post","owner":"Corporate Comms","cat":"Brand Collaborations","dates":["2026-08-12"]},{"cat":"Brand Collaborations","task":"Toyota Races Completed With Vehicle Post","owner":"Design Team","dates":["2026-08-19","2026-08-26","2026-09-02","2026-09-09"]},{"task":"Lexus — collab post","owner":"Corporate Comms","cat":"Brand Collaborations","dates":["2026-08-12"]},{"cat":"Influencers","task":"Tekkenmaster — reel + story live","owner":"Corporate Comms","dates":["2026-08-12"]},{"cat":"Influencers","task":"5osh Fkra — reel + story live","owner":"Corporate Comms","dates":["2026-08-12"]},{"cat":"Influencers","task":"Charlie / Gulf Insider — reel + story live","owner":"Corporate Comms","dates":["2026-08-12"]},{"cat":"Influencers","task":"GCC Influencer #1 (Qatar) — reel live","owner":"Corporate Comms","dates":["2026-08-14"]},{"cat":"Influencers","task":"GCC Influencer #2 (Kuwait) — reel live","owner":"Corporate Comms","dates":["2026-08-16"]},{"cat":"Influencers","task":"Influencer follow-up story (leaderboard)","owner":"Corporate Comms","dates":["2026-08-26"]},{"cat":"Bahrain Sports City","task":"BSC Event — KDR booth activation","owner":"Design Team","dates":["2026-08-14","2026-08-15","2026-08-16","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21"]},{"cat":"Bahrain Sports City","task":"BSC social coverage posts","owner":"Design Team","dates":["2026-08-14","2026-08-17","2026-08-19","2026-08-21"]},{"cat":"Competition & Leaderboard","task":"Leaderboard competition open","owner":"Digital Solutions","dates":["2026-08-12","2026-08-13","2026-08-14","2026-08-15","2026-08-16","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-22","2026-08-23","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-29","2026-08-30","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-05","2026-09-06","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-12"]},{"task":"Leaderboard update post — Week 1","owner":"Design Team","cat":"Competition & Leaderboard","dates":["2026-08-20"]},{"task":"Leaderboard update post — Week 2","owner":"Design Team","cat":"Competition & Leaderboard","dates":["2026-08-27"]},{"task":"Leaderboard update post — Week 3","owner":"Design Team","cat":"Competition & Leaderboard","dates":["2026-09-03"]},{"task":"Last chance urgency posts","owner":"Design Team","cat":"Competition & Leaderboard","dates":["2026-09-10"]},{"cat":"Competition & Leaderboard","task":"Leaderboard closes","owner":"Digital Solutions","dates":["2026-09-12"]},{"task":"Winners announced — collab post","owner":"Design Team","cat":"Competition & Leaderboard","dates":["2026-09-13"]},{"cat":"UGC","task":"UGC bonus draw open","owner":"Design Team","dates":["2026-08-12"]},{"cat":"UGC","task":"UGC reshares — ongoing","owner":"KDR Channel","dates":["2026-08-13","2026-08-20","2026-08-27","2026-09-03","2026-09-10"]},{"task":"UGC bonus draw winner announced","owner":"Design Team","cat":"UGC","dates":["2026-09-13"]},{"cat":"Email / CRM","task":"Email 1 — Welcome (auto on sign-up)","owner":"CRM","dates":["2026-08-12"]},{"cat":"Email / CRM","task":"Email 2 — Midway leaderboard update","owner":"CRM","dates":["2026-08-26"]},{"task":"Email 3 — Last chance","owner":"CRM","cat":"Email / CRM","dates":["2026-09-10"]},{"task":"Email 4 — Winners + consolation offer","owner":"CRM","cat":"Email / CRM","dates":["2026-09-13"]},{"cat":"Post-Campaign","task":"Campaign performance report","owner":"Design Team","dates":["2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25"]},{"cat":"Post-Campaign","task":"CRM database handoff to rental team","owner":"CRM","dates":["2026-09-16","2026-09-17","2026-09-18","2026-09-21"]},{"cat":"Brand Collaborations","task":"Lexus Races Completed With Vehicle Post","owner":"Design Team","dates":["2026-08-19","2026-08-26","2026-09-02","2026-09-09"]}]`);
 
 const SEED = {
-  kdr: { projects: [{ id: 'racing-game', name: 'Racing Game — Marketing Campaign', period: 'Aug 12 – Dec 15', type: 'Campaign' }], tasks: RAW_TASKS_KDR, timeline: RAW_TIMELINE_KDR },
+  kdr: { projects: [{ id: 'racing-game', name: 'Racing Game — Marketing Campaign', period: 'Aug 12 – Dec 15', type: 'Campaign', files: [] }], tasks: RAW_TASKS_KDR, timeline: RAW_TIMELINE_KDR },
   kvl: { projects: [], tasks: [], timeline: [] },
   kpv: { projects: [], tasks: [], timeline: [] }
 };
@@ -36,7 +37,7 @@ const BRAND_META = {
 const NEUTRAL = { color: '#6D6AFB', soft: 'rgba(109,106,251,0.12)' };
 
 /* ============================================================
-   DATA LAYER (Firestore, per-brand doc + one shared "todos" doc)
+   DATA LAYER
    ============================================================ */
 
 const Store = {
@@ -50,6 +51,8 @@ const Store = {
         data = snap.data();
         if (!data.projects && data.campaigns) { data.projects = data.campaigns; }
         if (!data.projects) data.projects = [];
+        data.projects.forEach(p => { if (!p.files) p.files = []; });
+        if (data.projects.length === 1) { (data.tasks || []).forEach(t => { if (!t.projectId) t.projectId = data.projects[0].id; }); }
       } else {
         data = structuredClone(SEED[brandKey]);
         await setDoc(ref, data);
@@ -80,7 +83,7 @@ function parseISO(s) { const [y, m, d] = s.split('-').map(Number); return new Da
 function addDays(dISOorDate, n) { const d = typeof dISOorDate === 'string' ? parseISO(dISOorDate) : new Date(dISOorDate); d.setDate(d.getDate() + n); return d; }
 function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
 function isOverdue(due) { return due && due < todayISO(); }
-function weekStartOf(dateISO) { const d = parseISO(dateISO); return addDays(d, -d.getDay()); } // Sunday
+function weekStartOf(dateISO) { const d = parseISO(dateISO); return addDays(d, -d.getDay()); }
 function inRange(dISO, startISO, endISO) { return dISO >= startISO && dISO <= endISO; }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -98,6 +101,8 @@ function groupConsecutive(dates) {
 }
 
 function brandData() { return DATA[state.brand]; }
+function currentProject() { return brandData().projects.find(p => p.id === state.projectId); }
+function projectNameFor(brandKey, projectId) { const p = DATA[brandKey].projects.find(x => x.id === projectId); return p ? p.name : null; }
 
 /* ============================================================
    SOUND + CURSOR + RIPPLE
@@ -129,7 +134,6 @@ function initCursor() {
   document.addEventListener('mouseover', (e) => { if (e.target.closest(hoverables)) ring.classList.add('hover'); });
   document.addEventListener('mouseout', (e) => { if (e.target.closest(hoverables)) ring.classList.remove('hover'); });
 }
-
 function initRipple() {
   document.addEventListener('click', (e) => {
     const el = e.target.closest('button, .campaign-row, .day-tab, .nav-item, .brand-tab');
@@ -141,8 +145,7 @@ function initRipple() {
     r.style.width = r.style.height = size + 'px';
     r.style.left = (e.clientX - rect.left - size / 2) + 'px';
     r.style.top = (e.clientY - rect.top - size / 2) + 'px';
-    const prevPosition = getComputedStyle(el).position;
-    if (prevPosition === 'static') el.style.position = 'relative';
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
     el.style.overflow = el.style.overflow || 'hidden';
     el.appendChild(r);
     setTimeout(() => r.remove(), 560);
@@ -180,7 +183,7 @@ function computeHealth(brandKey) {
 }
 
 /* ============================================================
-   DAILY TO-DO: items for a given date, completion tracking
+   DAILY TO-DO: item resolution + completion tracking
    ============================================================ */
 
 function itemsForDate(dateISO) {
@@ -188,7 +191,9 @@ function itemsForDate(dateISO) {
   (DATA.todos || []).forEach(t => { if (t.date === dateISO) items.push({ kind: 'todo', ref: t, brand: t.brand || null }); });
   BRAND_KEYS.forEach(brandKey => {
     DATA[brandKey].tasks.forEach(t => {
+      const doneToday = t.status === 'done' && t.completedAt === dateISO;
       if (t.due === dateISO) items.push({ kind: 'task', ref: t, brand: brandKey, overdue: false });
+      else if (doneToday) items.push({ kind: 'task', ref: t, brand: brandKey, overdue: false });
       else if (dateISO === todayISO() && isOverdue(t.due) && t.status !== 'done') items.push({ kind: 'task', ref: t, brand: brandKey, overdue: true });
     });
   });
@@ -233,9 +238,9 @@ function slidePill(pillEl, activeEl, container) {
 }
 
 function syncSidebar() {
-  const brandActive = (state.view === 'overview' || state.view === 'all' || state.view === 'project');
+  const brandActive = (state.view === 'overview' || state.view === 'project');
   document.querySelectorAll('.brand-tab').forEach(t => t.classList.toggle('active', brandActive && t.dataset.brand === state.brand));
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', (t.dataset.nav === 'overview' && state.view === 'global-overview') || (t.dataset.nav === 'todo' && state.view === 'todo') || (t.dataset.nav === 'all' && (state.view === 'all' || state.view === 'project'))));
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', (t.dataset.nav === 'overview' && state.view === 'global-overview') || (t.dataset.nav === 'todo' && state.view === 'todo') || (t.dataset.nav === 'all' && state.view === 'all')));
 
   const brandRail = document.getElementById('brandRail'), brandPill = document.getElementById('brandPill');
   slidePill(brandPill, brandActive ? document.querySelector('.brand-tab.active') : null, brandRail);
@@ -261,10 +266,6 @@ function countUp(el, target, suffix) {
   }
   requestAnimationFrame(tick);
 }
-
-function statCardsHTML(defs) {
-  return defs.map(() => `<div class="card stat-card hoverable"><div class="stat-label"></div><div class="stat-value"><span class="cu">0</span></div></div>`).join('');
-}
 function fillStatCards(container, defs) {
   container.innerHTML = '';
   defs.forEach(s => {
@@ -275,7 +276,6 @@ function fillStatCards(container, defs) {
     countUp(card.querySelector('.cu'), s.value, s.suffix);
   });
 }
-
 function statusBreakdownHTML(sb) {
   const pct = (n) => sb.total ? (n / sb.total) * 100 : 0;
   return `
@@ -290,32 +290,44 @@ function statusBreakdownHTML(sb) {
       <div class="status-legend-item"><div class="sw" style="background:var(--text-faint)"></div>To Do · ${sb.todo}</div>
     </div>`;
 }
-function animateStatusBars(root) {
-  root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; }));
+function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
+
+function renderAddProjectForm(container, brandKeyFixed) {
+  const wrap = document.createElement('div');
+  wrap.className = 'add-project-form';
+  wrap.innerHTML = `
+    ${brandKeyFixed ? '' : `<select id="newProjBrand">${BRAND_KEYS.map(b => `<option value="${b}">${b.toUpperCase()}</option>`).join('')}</select>`}
+    <input type="text" class="name-input" id="newProjName" placeholder="Project name">
+    <input type="text" class="period-input" id="newProjPeriod" placeholder="Period, e.g. Sep 2026">
+    <button id="newProjSubmit">Add project</button>`;
+  container.appendChild(wrap);
+  wrap.querySelector('#newProjSubmit').addEventListener('click', () => {
+    const brandKey = brandKeyFixed || wrap.querySelector('#newProjBrand').value;
+    const name = wrap.querySelector('#newProjName').value.trim();
+    const period = wrap.querySelector('#newProjPeriod').value.trim() || 'Ongoing';
+    if (!name) return;
+    DATA[brandKey].projects.push({ id: uid(), name, period, type: 'Project', files: [] });
+    Store.saveBrand(brandKey);
+    clickTick();
+    navigate(state.view);
+  });
 }
 
 /* ============================================================
-   VIEW: GLOBAL OVERVIEW (all brands at once)
+   VIEW: GLOBAL OVERVIEW
    ============================================================ */
 
 function renderGlobalOverview() {
   const g = computeGlobalStats();
   const mount = document.getElementById('viewMount');
-  mount.innerHTML = `
-    <div class="stat-row" id="statRow"></div>
-    <div class="brand-grid" id="brandGrid"></div>`;
+  mount.innerHTML = `<div class="stat-row" id="statRow"></div><div class="brand-grid" id="brandGrid"></div>`;
   fillStatCards(document.getElementById('statRow'), [
-    { label: 'Total projects', value: g.totalProjects },
-    { label: 'Overall completion', value: g.pctDone, suffix: '%' },
-    { label: 'Due today', value: g.dueToday },
-    { label: 'Overdue', value: g.overdue }
+    { label: 'Total projects', value: g.totalProjects }, { label: 'Overall completion', value: g.pctDone, suffix: '%' },
+    { label: 'Due today', value: g.dueToday }, { label: 'Overdue', value: g.overdue }
   ]);
-
   const grid = document.getElementById('brandGrid');
   BRAND_KEYS.forEach(brandKey => {
-    const meta = BRAND_META[brandKey];
-    const s = computeStats(brandKey);
-    const topProject = DATA[brandKey].projects[0];
+    const meta = BRAND_META[brandKey], s = computeStats(brandKey), topProject = DATA[brandKey].projects[0];
     const card = document.createElement('div');
     card.className = 'card brand-card hoverable';
     card.innerHTML = `
@@ -338,99 +350,88 @@ function renderGlobalOverview() {
    ============================================================ */
 
 function renderBrandOverview() {
-  const meta = BRAND_META[state.brand];
-  const stats = computeStats(state.brand);
-  const sb = computeStatusBreakdown(state.brand);
-  const health = computeHealth(state.brand);
-  const projects = brandData().projects;
-  const { active } = { active: itemsForDate(todayISO()).active.filter(it => it.brand === state.brand) };
+  const stats = computeStats(state.brand), sb = computeStatusBreakdown(state.brand), health = computeHealth(state.brand), projects = brandData().projects;
+  const active = itemsForDate(todayISO()).active.filter(it => it.brand === state.brand);
 
   const mount = document.getElementById('viewMount');
   mount.innerHTML = `
     <div class="stat-row" id="statRow"></div>
     <div class="grid-2">
-      <div class="card panel-card hoverable">
-        <div class="card-title">Task status</div>
-        <div class="card-sub">${stats.done} of ${stats.total} tasks done</div>
-        ${statusBreakdownHTML(sb)}
-      </div>
-      <div class="card panel-card hoverable">
-        <div class="card-title" style="margin-bottom:10px;">Task health by category</div>
-        <div id="healthRows"></div>
-      </div>
+      <div class="card panel-card hoverable"><div class="card-title">Task status</div><div class="card-sub">${stats.done} of ${stats.total} tasks done</div>${statusBreakdownHTML(sb)}</div>
+      <div class="card panel-card hoverable"><div class="card-title" style="margin-bottom:10px;">Task health by category</div><div id="healthRows"></div></div>
     </div>
     <div class="card campaign-card">
       <div style="padding:14px 20px 0;"><div class="section-title" style="margin:0 0 2px;">Projects</div></div>
+      <div id="addProjectMount"></div>
       <div class="campaign-head-row"><div>Project</div><div>Progress</div><div>Status</div><div style="text-align:right;">Days left</div></div>
       <div id="projectList"></div>
     </div>
-    <div class="card todo-card">
-      <div style="padding:14px 20px 0;"><div class="section-title" style="margin:0 0 2px;">Due today &amp; overdue</div></div>
-      <div id="todoPreview"></div>
-    </div>`;
+    <div class="card todo-card"><div style="padding:14px 20px 0;"><div class="section-title" style="margin:0 0 2px;">Due today &amp; overdue</div></div><div id="todoPreview"></div></div>`;
 
   fillStatCards(document.getElementById('statRow'), [
-    { label: 'Active projects', value: stats.activeProjects },
-    { label: 'Tasks completed', value: stats.pctDone, suffix: '%' },
-    { label: 'Due today', value: stats.dueToday },
-    { label: 'Overdue', value: stats.overdue }
+    { label: 'Active projects', value: stats.activeProjects }, { label: 'Tasks completed', value: stats.pctDone, suffix: '%' },
+    { label: 'Due today', value: stats.dueToday }, { label: 'Overdue', value: stats.overdue }
   ]);
   animateStatusBars(mount);
 
   const healthRows = document.getElementById('healthRows');
   if (!health.length) { healthRows.innerHTML = `<div style="font-size:12.5px;color:var(--text-dim);padding:8px 0;">No categories tracked yet.</div>`; }
-  else {
-    health.forEach(h => {
-      const row = document.createElement('div');
-      row.className = 'health-row';
-      row.innerHTML = `<div><div class="health-name">${h.name}</div><div class="health-bar-track"><div class="health-bar-fill" style="width:0%"></div></div></div><div class="health-pct">${h.pct}%</div>`;
-      healthRows.appendChild(row);
-      requestAnimationFrame(() => { row.querySelector('.health-bar-fill').style.width = h.pct + '%'; });
-    });
-  }
+  else health.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'health-row';
+    row.innerHTML = `<div><div class="health-name">${h.name}</div><div class="health-bar-track"><div class="health-bar-fill" style="width:0%"></div></div></div><div class="health-pct">${h.pct}%</div>`;
+    healthRows.appendChild(row);
+    requestAnimationFrame(() => { row.querySelector('.health-bar-fill').style.width = h.pct + '%'; });
+  });
+
+  renderAddProjectForm(document.getElementById('addProjectMount'), state.brand);
 
   const projectList = document.getElementById('projectList');
-  if (!projects.length) { projectList.innerHTML = `<div class="empty-row"><div class="t">Nothing running yet</div><div class="s">Start a project to see its timeline and tasks here.</div><button>New project</button></div>`; }
-  else {
-    projects.forEach(p => {
-      const pct = stats.pctDone;
-      const dates = DATA[state.brand].timeline.flatMap(t => t.dates).sort();
-      const endDate = dates.length ? parseISO(dates[dates.length - 1]) : null;
-      const daysLeft = endDate ? daysBetween(parseISO(todayISO()), endDate) : null;
-      const row = document.createElement('div');
-      row.className = 'campaign-row';
-      row.innerHTML = `
-        <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">Live · ${p.period}</div></div>
-        <div><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">${pct}%</div></div>
-        <div><span class="status-pill ${pct >= 50 ? 'good' : 'risk'}">${pct >= 50 ? 'On track' : 'At risk'}</span></div>
-        <div style="text-align:right; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;">${daysLeft === null ? '—' : daysLeft > 0 ? daysLeft + 'd' : 'Ended'}</div>`;
-      row.addEventListener('click', () => navigate('project', { projectId: p.id }));
-      projectList.appendChild(row);
-      requestAnimationFrame(() => { row.querySelector('.progress-fill').style.width = pct + '%'; });
-    });
-  }
+  if (!projects.length) { projectList.innerHTML = `<div class="empty-row"><div class="t">Nothing running yet</div><div class="s">Add your first project above.</div></div>`; }
+  else projects.forEach(p => {
+    const tasksForProject = brandData().tasks.filter(t => t.projectId === p.id);
+    const done = tasksForProject.filter(t => t.status === 'done').length;
+    const pct = tasksForProject.length ? Math.round((done / tasksForProject.length) * 100) : 0;
+    const dates = brandData().timeline.flatMap(t => t.dates).sort();
+    const endDate = dates.length ? parseISO(dates[dates.length - 1]) : null;
+    const daysLeft = endDate ? daysBetween(parseISO(todayISO()), endDate) : null;
+    const row = document.createElement('div');
+    row.className = 'campaign-row';
+    row.innerHTML = `
+      <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">Live · ${p.period}</div></div>
+      <div><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">${pct}%</div></div>
+      <div><span class="status-pill ${pct >= 50 ? 'good' : 'risk'}">${pct >= 50 ? 'On track' : 'At risk'}</span></div>
+      <div style="text-align:right; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;">${daysLeft === null ? '—' : daysLeft > 0 ? daysLeft + 'd' : 'Ended'}</div>`;
+    row.addEventListener('click', () => navigate('project', { projectId: p.id }));
+    projectList.appendChild(row);
+    requestAnimationFrame(() => { row.querySelector('.progress-fill').style.width = pct + '%'; });
+  });
 
   renderTodoRows(document.getElementById('todoPreview'), active.slice(0, 4), true);
 }
 
 /* ============================================================
-   VIEW: DAILY TO-DO (day navigation, week strip, counters)
+   VIEW: DAILY TO-DO
    ============================================================ */
 
-function renderTodoRows(container, items, showBrandTag) {
+function renderTodoRows(container, items, showTag) {
   if (!items.length) { container.innerHTML = `<div style="padding:20px; font-size:12.5px; color:var(--text-dim);">Nothing here.</div>`; return; }
   container.innerHTML = '';
   items.forEach(item => {
     const isTask = item.kind === 'task';
     const title = isTask ? item.ref.title : item.ref.text;
     const meta = item.brand ? BRAND_META[item.brand] : null;
+    const projName = isTask ? projectNameFor(item.brand, item.ref.projectId) : null;
     const row = document.createElement('div');
     row.className = 'todo-row';
     row.innerHTML = `
       <div class="check"></div>
-      <div class="todo-title">${title}</div>
+      <div>
+        <div class="todo-title">${title}</div>
+        ${projName ? `<div class="todo-project-sub">${projName}</div>` : ''}
+      </div>
       ${isTask && item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
-      ${showBrandTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
+      ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
     row.querySelector('.check').addEventListener('click', () => { toggleItem(item); renderCurrentView(); });
     container.appendChild(row);
   });
@@ -481,7 +482,7 @@ function renderDailyTodo() {
 
   fillStatCards(document.getElementById('counters'), [
     { label: 'Completed today', value: completedCountInRange(todayISO(), todayISO()) },
-    { label: 'Completed this week', value: completedCountInRange(weekStart instanceof Date ? fmt(weekStart) : weekStart, weekEnd) },
+    { label: 'Completed this week', value: completedCountInRange(fmt(weekStart), weekEnd) },
     { label: 'Completed this month', value: completedCountInRange(monthStart, monthEnd) }
   ]);
 
@@ -498,9 +499,10 @@ function renderDailyTodo() {
       const isTask = item.kind === 'task';
       const title = isTask ? item.ref.title : item.ref.text;
       const meta = item.brand ? BRAND_META[item.brand] : null;
+      const projName = isTask ? projectNameFor(item.brand, item.ref.projectId) : null;
       const row = document.createElement('div');
       row.className = 'todo-row is-done';
-      row.innerHTML = `<div class="check checked">✓</div><div class="todo-title">${title}</div>${meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
+      row.innerHTML = `<div class="check checked">✓</div><div><div class="todo-title">${title}</div>${projName ? `<div class="todo-project-sub">${projName}</div>` : ''}</div>${meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
       row.querySelector('.check').addEventListener('click', () => { toggleItem(item); navigate('todo'); });
       doneContainer.appendChild(row);
     });
@@ -519,37 +521,44 @@ function addTodoFromInput() {
 }
 
 /* ============================================================
-   VIEW: ALL PROJECTS
+   VIEW: ALL PROJECTS (global, cross-brand)
    ============================================================ */
 
-function renderAllProjects() {
-  const projects = brandData().projects;
+function renderAllProjectsGlobal() {
   const mount = document.getElementById('viewMount');
   mount.innerHTML = `<div class="card campaign-card">
-    <div style="padding:14px 20px 0;"><div class="section-title">All projects — ${state.brand.toUpperCase()}</div></div>
-    <div class="campaign-head-row"><div>Project</div><div>Progress</div><div>Status</div><div style="text-align:right;">Days left</div></div>
-    <div id="projectListFull"></div></div>`;
-  const list = document.getElementById('projectListFull');
-  if (!projects.length) { list.innerHTML = `<div class="empty-row"><div class="t">Nothing running yet</div><div class="s">Start a project to see it here.</div><button>New project</button></div>`; return; }
-  const stats = computeStats(state.brand);
-  projects.forEach(p => {
-    const dates = DATA[state.brand].timeline.flatMap(t => t.dates).sort();
-    const endDate = dates.length ? parseISO(dates[dates.length - 1]) : null;
-    const daysLeft = endDate ? daysBetween(parseISO(todayISO()), endDate) : null;
-    const row = document.createElement('div');
-    row.className = 'campaign-row';
-    row.innerHTML = `
-      <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">Live · ${p.period}</div></div>
-      <div><div class="progress-track"><div class="progress-fill" style="width:${stats.pctDone}%"></div></div><div class="progress-label">${stats.pctDone}%</div></div>
-      <div><span class="status-pill ${stats.pctDone >= 50 ? 'good' : 'risk'}">${stats.pctDone >= 50 ? 'On track' : 'At risk'}</span></div>
-      <div style="text-align:right; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;">${daysLeft === null ? '—' : daysLeft > 0 ? daysLeft + 'd' : 'Ended'}</div>`;
-    row.addEventListener('click', () => navigate('project', { projectId: p.id }));
-    list.appendChild(row);
+    <div style="padding:14px 20px 0;"><div class="section-title">All Projects</div></div>
+    <div id="addProjectMount"></div>
+    <div class="campaign-head-row" style="grid-template-columns:2fr 90px 1fr 1fr;"><div>Project</div><div>Brand</div><div>Progress</div><div>Status</div></div>
+    <div id="globalProjectList"></div></div>`;
+  renderAddProjectForm(document.getElementById('addProjectMount'), null);
+
+  const list = document.getElementById('globalProjectList');
+  let any = false;
+  BRAND_KEYS.forEach(brandKey => {
+    const meta = BRAND_META[brandKey];
+    DATA[brandKey].projects.forEach(p => {
+      any = true;
+      const tasksForProject = DATA[brandKey].tasks.filter(t => t.projectId === p.id);
+      const done = tasksForProject.filter(t => t.status === 'done').length;
+      const pct = tasksForProject.length ? Math.round((done / tasksForProject.length) * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'campaign-row';
+      row.style.gridTemplateColumns = '2fr 90px 1fr 1fr';
+      row.innerHTML = `
+        <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">${p.period}</div></div>
+        <div><span class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandKey.toUpperCase()}</span></div>
+        <div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-label">${pct}%</div></div>
+        <div><span class="status-pill ${pct >= 50 ? 'good' : 'risk'}">${pct >= 50 ? 'On track' : 'At risk'}</span></div>`;
+      row.addEventListener('click', () => { state.brand = brandKey; navigate('project', { projectId: p.id }); });
+      list.appendChild(row);
+    });
   });
+  if (!any) list.innerHTML = `<div class="empty-row"><div class="t">No projects yet</div><div class="s">Add your first one above.</div></div>`;
 }
 
 /* ============================================================
-   VIEW: PROJECT DETAIL (Timeline / Tasks)
+   VIEW: PROJECT DETAIL (Timeline / Tasks / Files)
    ============================================================ */
 
 function renderProjectDetail() {
@@ -559,11 +568,14 @@ function renderProjectDetail() {
     <div class="view-tabs">
       <button class="view-tab ${state.projectTab === 'timeline' ? 'active' : ''}" data-tab="timeline">Timeline</button>
       <button class="view-tab ${state.projectTab === 'tasks' ? 'active' : ''}" data-tab="tasks">Tasks</button>
+      <button class="view-tab ${state.projectTab === 'files' ? 'active' : ''}" data-tab="files">Files</button>
     </div>
     <div id="tabMount"></div>`;
   document.getElementById('backLink').addEventListener('click', () => navigate('overview'));
   mount.querySelectorAll('.view-tab').forEach(tab => tab.addEventListener('click', () => { state.projectTab = tab.dataset.tab; renderProjectDetail(); }));
-  if (state.projectTab === 'timeline') renderGantt(); else renderTaskTracker();
+  if (state.projectTab === 'timeline') renderGantt();
+  else if (state.projectTab === 'tasks') renderTaskTracker();
+  else renderProjectFiles();
 }
 
 function renderGantt() {
@@ -595,39 +607,53 @@ function renderGantt() {
       runs.forEach(([s, e]) => {
         const left = daysBetween(rangeStart, parseISO(s)) * dayWidth;
         const width = (daysBetween(parseISO(s), parseISO(e)) + 1) * dayWidth - 3;
-        barsHTML += `<div class="gantt-bar" style="left:${left}px; width:${Math.max(width, 5)}px;"></div>`;
+        const label = s === e ? parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} → ${parseISO(e).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+        barsHTML += `<div class="gantt-bar" title="${r.item.task} — ${label}" style="left:${left}px; width:${Math.max(width, 5)}px;"></div>`;
       });
-      rowsHTML += `<div class="gantt-row"><div class="gantt-label">${r.item.task}</div><div class="gantt-track" style="width:${canvasWidth}px;">${barsHTML}</div></div>`;
+      rowsHTML += `<div class="gantt-row"><div class="gantt-label" title="${r.item.task}">${r.item.task}</div><div class="gantt-track" style="width:${canvasWidth}px;">${barsHTML}</div></div>`;
     }
   });
 
-  let gridHTML = '';
+  const contentHeight = 34 + rows.length * 33;
+
+  let gridHTML = '', tickHTML = '';
   let cursor = new Date(rangeStart); cursor.setDate(1);
   if (cursor < rangeStart) cursor.setMonth(cursor.getMonth() + 1);
   while (cursor <= rangeEnd) {
     const x = labelWidth + daysBetween(rangeStart, cursor) * dayWidth;
-    gridHTML += `<div class="gantt-month-line" style="left:${x}px;"></div><div class="gantt-month-label" style="left:${x + 5}px;">${cursor.toLocaleDateString('en-GB', { month: 'short' })}</div>`;
+    gridHTML += `<div class="gantt-month-line" style="left:${x}px; height:${contentHeight}px;"></div><div class="gantt-month-label" style="left:${x + 5}px;">${cursor.toLocaleDateString('en-GB', { month: 'short' })}</div>`;
     cursor.setMonth(cursor.getMonth() + 1);
   }
+  // weekly day-number ticks for scannable dates without clutter
+  for (let d = 0; d <= totalDays; d += 7) {
+    const dateObj = addDays(rangeStart, d);
+    const x = labelWidth + d * dayWidth;
+    tickHTML += `<div class="gantt-day-tick" style="left:${x + 3}px;">${dateObj.getDate()}</div>`;
+  }
+
   const todayOffset = daysBetween(rangeStart, parseISO(todayISO()));
-  let todayLineHTML = '';
+  let todayLineHTML = '', elapsedHTML = '';
+  const clampedOffset = Math.max(0, Math.min(todayOffset, totalDays));
+  elapsedHTML = `<div class="gantt-elapsed" style="left:${labelWidth}px; width:${clampedOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
   if (todayOffset >= 0 && todayOffset <= totalDays) {
-    todayLineHTML = `<div class="gantt-today-line" style="left:${labelWidth + todayOffset * dayWidth}px;"></div>`;
+    todayLineHTML = `<div class="gantt-today-line" style="left:${labelWidth + todayOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
   }
 
   tabMount.innerHTML = `
     <div class="card gantt-card">
       <div class="gantt-wrap">
         <div class="gantt-header-row"><div class="gantt-header-label">Task</div><div style="width:${canvasWidth}px;"></div></div>
-        ${gridHTML}${todayLineHTML}
+        ${elapsedHTML}${gridHTML}${tickHTML}${todayLineHTML}
         ${rowsHTML}
       </div>
-    </div>`;
+    </div>
+    <div class="card-sub" style="margin-top:10px; padding-left:4px;">Shaded area = time already elapsed · red line = today · hover a bar for its exact date</div>`;
 }
 
 function renderTaskTracker() {
   const tabMount = document.getElementById('tabMount');
-  const tasks = brandData().tasks;
+  const project = currentProject();
+  const tasks = brandData().tasks.filter(t => !project || t.projectId === project.id || !t.projectId);
   const filtered = state.taskFilter === 'all' ? [...tasks].sort((a, b) => (a.status === 'done') - (b.status === 'done')) : tasks.filter(t => t.status === state.taskFilter);
 
   tabMount.innerHTML = `
@@ -666,7 +692,6 @@ function renderTaskTracker() {
           </div>
         </div>
       </div>`;
-
     item.querySelector('.task-title-cell').addEventListener('click', () => { state.expandedTask = isOpen ? null : t.id; renderTaskTracker(); });
     item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -690,6 +715,42 @@ function renderTaskTracker() {
   });
 }
 
+function renderProjectFiles() {
+  const tabMount = document.getElementById('tabMount');
+  const project = currentProject();
+  project.files = project.files || [];
+  tabMount.innerHTML = `
+    <div class="card">
+      <div class="add-todo-row">
+        <input type="text" id="fileLabelInput" placeholder="Label, e.g. Media Plan">
+        <input type="text" id="fileUrlInput" placeholder="Paste Google Drive / SharePoint link">
+        <button id="addFileBtn">Add</button>
+      </div>
+      <div id="fileList"></div>
+    </div>`;
+  document.getElementById('addFileBtn').addEventListener('click', () => {
+    const label = document.getElementById('fileLabelInput').value.trim();
+    const url = document.getElementById('fileUrlInput').value.trim();
+    if (!label || !url) return;
+    project.files.push({ id: uid(), label, url });
+    Store.saveBrand(state.brand);
+    clickTick();
+    renderProjectFiles();
+  });
+  const list = document.getElementById('fileList');
+  if (!project.files.length) { list.innerHTML = `<div style="padding:20px;font-size:12.5px;color:var(--text-dim);">No files linked yet.</div>`; }
+  else {
+    list.innerHTML = '';
+    project.files.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'todo-row';
+      row.innerHTML = `<a href="${f.url}" target="_blank" rel="noopener" class="file-link">📎 ${f.label}</a><button class="file-remove-btn" data-id="${f.id}">×</button>`;
+      row.querySelector('.file-remove-btn').addEventListener('click', () => { project.files = project.files.filter(x => x.id !== f.id); Store.saveBrand(state.brand); renderProjectFiles(); });
+      list.appendChild(row);
+    });
+  }
+}
+
 /* ============================================================
    ROUTER
    ============================================================ */
@@ -698,7 +759,7 @@ function renderCurrentView() {
   if (state.view === 'global-overview') renderGlobalOverview();
   else if (state.view === 'overview') renderBrandOverview();
   else if (state.view === 'todo') renderDailyTodo();
-  else if (state.view === 'all') renderAllProjects();
+  else if (state.view === 'all') renderAllProjectsGlobal();
   else if (state.view === 'project') renderProjectDetail();
 }
 
@@ -706,15 +767,15 @@ function navigate(view, opts = {}) {
   state.view = view;
   if (opts.projectId) { state.projectId = opts.projectId; state.projectTab = 'timeline'; }
   const mount = document.getElementById('viewMount');
-  const brandActive = (view === 'overview' || view === 'all' || view === 'project');
+  const brandActive = (view === 'overview' || view === 'project');
 
-  document.getElementById('brandEyebrow').textContent = brandActive ? BRAND_META[state.brand].label : (view === 'global-overview' ? 'ALL BRANDS' : '');
+  document.getElementById('brandEyebrow').textContent = brandActive ? BRAND_META[state.brand].label : (view === 'todo' ? '' : 'ALL BRANDS');
   document.getElementById('mainTitle').textContent =
     view === 'global-overview' ? 'Overview' :
     view === 'overview' ? 'Overview' :
     view === 'todo' ? 'Daily To-Do' :
     view === 'all' ? 'All Projects' :
-    (brandData().projects.find(p => p.id === state.projectId) || {}).name || 'Project';
+    (currentProject() || {}).name || 'Project';
 
   renderCurrentView();
   mount.classList.remove('view-fade'); void mount.offsetWidth; mount.classList.add('view-fade');
