@@ -30,11 +30,11 @@ const SEED = {
 };
 const BRAND_KEYS = ['kdr', 'kvl', 'kpv'];
 const BRAND_META = {
-  kdr: { color: '#FF7A45', soft: 'rgba(255,122,69,0.12)', label: 'KDR · DAILY RENTAL' },
-  kvl: { color: '#5B6EF5', soft: 'rgba(91,110,245,0.12)', label: 'KVL · VEHICLE LEASING' },
-  kpv: { color: '#16A863', soft: 'rgba(22,168,99,0.12)', label: 'KPV · PRE-OWNED VEHICLES' }
+  kdr: { color: '#14161B', soft: 'rgba(20,22,27,0.08)', label: 'KDR · DAILY RENTAL' },
+  kvl: { color: '#565C68', soft: 'rgba(86,92,104,0.10)', label: 'KVL · VEHICLE LEASING' },
+  kpv: { color: '#868D99', soft: 'rgba(134,141,153,0.12)', label: 'KPV · PRE-OWNED VEHICLES' }
 };
-const NEUTRAL = { color: '#6D6AFB', soft: 'rgba(109,106,251,0.12)' };
+const NEUTRAL = { color: '#12141A', soft: 'rgba(18,20,26,0.08)' };
 
 /* ============================================================
    DATA LAYER
@@ -82,10 +82,14 @@ function todayISO() { return fmt(new Date()); }
 function parseISO(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
 function addDays(dISOorDate, n) { const d = typeof dISOorDate === 'string' ? parseISO(dISOorDate) : new Date(dISOorDate); d.setDate(d.getDate() + n); return d; }
 function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+function datesBetweenInclusive(sISO, eISO) { const out = []; let cur = parseISO(sISO); const end = parseISO(eISO); while (cur <= end) { out.push(fmt(cur)); cur = addDays(cur, 1); } return out; }
 function isOverdue(due) { return due && due < todayISO(); }
 function weekStartOf(dateISO) { const d = parseISO(dateISO); return addDays(d, -d.getDay()); }
 function inRange(dISO, startISO, endISO) { return dISO >= startISO && dISO <= endISO; }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+const YEAR_ANCHOR = '2026-09-16';
+const YEAR_TARGET = fmt(addDays(YEAR_ANCHOR, 365));
 
 function groupConsecutive(dates) {
   const ds = [...dates].sort();
@@ -285,7 +289,7 @@ function statusBreakdownHTML(sb) {
       <div class="status-seg todo" style="width:0%" data-w="${pct(sb.todo)}"></div>
     </div>
     <div class="status-legend">
-      <div class="status-legend-item"><div class="sw" style="background:var(--kpv)"></div>Done · ${sb.done}</div>
+      <div class="status-legend-item"><div class="sw" style="background:var(--good-text)"></div>Done · ${sb.done}</div>
       <div class="status-legend-item"><div class="sw" style="background:var(--accent)"></div>In Progress · ${sb.progress}</div>
       <div class="status-legend-item"><div class="sw" style="background:var(--text-faint)"></div>To Do · ${sb.todo}</div>
     </div>`;
@@ -295,14 +299,45 @@ function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(
 function renderAddProjectForm(container, brandKeyFixed) {
   const wrap = document.createElement('div');
   wrap.className = 'add-project-form';
+  let selectedBrand = brandKeyFixed || BRAND_KEYS[0];
+
+  const brandPickerHTML = brandKeyFixed ? '' : `
+    <div class="custom-select" id="brandPicker">
+      <button type="button" class="custom-select-btn" id="brandPickerBtn">
+        <span class="csb-dot" id="brandPickerDot" style="background:${BRAND_META[selectedBrand].color}"></span>
+        <span id="brandPickerLabel">${selectedBrand.toUpperCase()}</span>
+        <svg class="csb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="custom-select-menu" id="brandPickerMenu">
+        ${BRAND_KEYS.map(b => `<div class="custom-select-opt" data-b="${b}"><span class="csb-dot" style="background:${BRAND_META[b].color}"></span>${b.toUpperCase()}</div>`).join('')}
+      </div>
+    </div>`;
+
   wrap.innerHTML = `
-    ${brandKeyFixed ? '' : `<select id="newProjBrand">${BRAND_KEYS.map(b => `<option value="${b}">${b.toUpperCase()}</option>`).join('')}</select>`}
+    ${brandPickerHTML}
     <input type="text" class="name-input" id="newProjName" placeholder="Project name">
     <input type="text" class="period-input" id="newProjPeriod" placeholder="Period, e.g. Sep 2026">
     <button id="newProjSubmit">Add project</button>`;
   container.appendChild(wrap);
+
+  if (!brandKeyFixed) {
+    const btn = wrap.querySelector('#brandPickerBtn');
+    const menu = wrap.querySelector('#brandPickerMenu');
+    btn.addEventListener('click', (e) => { e.stopPropagation(); btn.classList.toggle('open'); menu.classList.toggle('open'); });
+    wrap.querySelectorAll('.custom-select-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        selectedBrand = opt.dataset.b;
+        wrap.querySelector('#brandPickerLabel').textContent = selectedBrand.toUpperCase();
+        wrap.querySelector('#brandPickerDot').style.background = BRAND_META[selectedBrand].color;
+        btn.classList.remove('open'); menu.classList.remove('open');
+        clickTick();
+      });
+    });
+    document.addEventListener('click', () => { btn.classList.remove('open'); menu.classList.remove('open'); });
+  }
+
   wrap.querySelector('#newProjSubmit').addEventListener('click', () => {
-    const brandKey = brandKeyFixed || wrap.querySelector('#newProjBrand').value;
+    const brandKey = brandKeyFixed || selectedBrand;
     const name = wrap.querySelector('#newProjName').value.trim();
     const period = wrap.querySelector('#newProjPeriod').value.trim() || 'Ongoing';
     if (!name) return;
@@ -313,9 +348,33 @@ function renderAddProjectForm(container, brandKeyFixed) {
   });
 }
 
-/* ============================================================
-   VIEW: GLOBAL OVERVIEW
-   ============================================================ */
+function renderYearCountdown() {
+  const totalSpan = daysBetween(parseISO(YEAR_ANCHOR), parseISO(YEAR_TARGET));
+  const daysLeft = Math.max(0, daysBetween(parseISO(todayISO()), parseISO(YEAR_TARGET)));
+  const elapsed = totalSpan - daysLeft;
+  const pctRemaining = Math.max(0, Math.min(1, daysLeft / totalSpan));
+  const pctElapsed = 1 - pctRemaining;
+
+  const topH = 22 * pctRemaining, topY = 6;
+  const botH = 22 * pctElapsed, botY = 54 - botH;
+
+  const el = document.getElementById('yearCountdown');
+  el.title = `${daysLeft} days left until ${parseISO(YEAR_TARGET).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+  el.innerHTML = `
+    <svg viewBox="0 0 40 60" class="hourglass-svg">
+      <path d="M8,6 L32,6 L20,28 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M8,54 L32,54 L20,32 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <clipPath id="hgTopClip"><path d="M8,6 L32,6 L20,28 Z"/></clipPath>
+      <clipPath id="hgBotClip"><path d="M8,54 L32,54 L20,32 Z"/></clipPath>
+      <rect class="hg-sand-top" x="8" width="24" y="${topY}" height="${topH}" clip-path="url(#hgTopClip)" fill="currentColor" opacity="0.85"/>
+      <rect class="hg-sand-bottom" x="8" width="24" y="${botY}" height="${botH}" clip-path="url(#hgBotClip)" fill="currentColor" opacity="0.85"/>
+      <circle class="hg-grain" cx="20" cy="29" r="1.1" fill="currentColor"/>
+    </svg>
+    <div class="year-countdown-text">
+      <div class="ycd-days">${daysLeft}</div>
+      <div class="ycd-label">days left this year</div>
+    </div>`;
+}
 
 function renderGlobalOverview() {
   const g = computeGlobalStats();
@@ -581,73 +640,118 @@ function renderProjectDetail() {
 function renderGantt() {
   const tabMount = document.getElementById('tabMount');
   const timeline = brandData().timeline;
-  if (!timeline.length) { tabMount.innerHTML = `<div class="card"><div class="empty-page"><div class="t">No timeline yet</div><div class="s">Add scheduled items to see the Gantt view.</div></div></div>`; return; }
-
-  const allDates = timeline.flatMap(t => t.dates).sort();
-  const rangeStart = parseISO(allDates[0]), rangeEnd = parseISO(allDates[allDates.length - 1]);
   const dayWidth = 14;
-  const totalDays = daysBetween(rangeStart, rangeEnd) + 1;
-  const canvasWidth = totalDays * dayWidth;
-  const labelWidth = 200;
+  const labelWidth = 230;
 
-  const rows = [];
-  const seenCats = new Set();
-  timeline.forEach(item => {
-    if (!seenCats.has(item.cat)) { seenCats.add(item.cat); rows.push({ type: 'cat', label: item.cat }); }
-    rows.push({ type: 'task', item });
-  });
+  function buildBody() {
+    if (!timeline.length) return `<div class="empty-page"><div class="t">No timeline yet</div><div class="s">Add your first scheduled item above.</div></div>`;
 
-  let rowsHTML = '';
-  rows.forEach(r => {
-    if (r.type === 'cat') {
-      rowsHTML += `<div class="gantt-row cat-row"><div class="gantt-label">${r.label}</div><div class="gantt-track" style="width:${canvasWidth}px;"></div></div>`;
-    } else {
-      const runs = groupConsecutive(r.item.dates);
-      let barsHTML = '';
-      runs.forEach(([s, e]) => {
-        const left = daysBetween(rangeStart, parseISO(s)) * dayWidth;
-        const width = (daysBetween(parseISO(s), parseISO(e)) + 1) * dayWidth - 3;
-        const label = s === e ? parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} → ${parseISO(e).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
-        barsHTML += `<div class="gantt-bar" title="${r.item.task} — ${label}" style="left:${left}px; width:${Math.max(width, 5)}px;"></div>`;
-      });
-      rowsHTML += `<div class="gantt-row"><div class="gantt-label" title="${r.item.task}">${r.item.task}</div><div class="gantt-track" style="width:${canvasWidth}px;">${barsHTML}</div></div>`;
+    const allDates = timeline.flatMap(t => t.dates).sort();
+    const rangeStart = parseISO(allDates[0]), rangeEnd = parseISO(allDates[allDates.length - 1]);
+    const totalDays = daysBetween(rangeStart, rangeEnd) + 1;
+    const canvasWidth = totalDays * dayWidth;
+
+    const rows = [];
+    const seenCats = new Set();
+    timeline.forEach(item => {
+      if (!seenCats.has(item.cat)) { seenCats.add(item.cat); rows.push({ type: 'cat', label: item.cat }); }
+      rows.push({ type: 'task', item });
+    });
+
+    let rowsHTML = '';
+    rows.forEach(r => {
+      if (r.type === 'cat') {
+        rowsHTML += `<div class="gantt-row cat-row"><div class="gantt-label">${r.label}</div><div class="gantt-track" style="width:${canvasWidth}px;"></div></div>`;
+      } else {
+        const idx = timeline.indexOf(r.item);
+        const runs = groupConsecutive(r.item.dates);
+        let barsHTML = '';
+        runs.forEach(([s, e]) => {
+          const left = daysBetween(rangeStart, parseISO(s)) * dayWidth;
+          const width = (daysBetween(parseISO(s), parseISO(e)) + 1) * dayWidth - 3;
+          const dlabel = s === e ? parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} → ${parseISO(e).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+          barsHTML += `<div class="gantt-bar" title="${r.item.task} — ${dlabel}" style="left:${left}px; width:${Math.max(width, 5)}px;"></div>`;
+        });
+        rowsHTML += `<div class="gantt-row">
+          <div class="gantt-label" title="${r.item.task}">
+            <span>${r.item.task}</span>
+            <button class="gantt-delete-btn" data-idx="${idx}">×</button>
+          </div>
+          <div class="gantt-track" style="width:${canvasWidth}px;">${barsHTML}</div>
+        </div>`;
+      }
+    });
+
+    const contentHeight = 34 + rows.length * 33;
+
+    let gridHTML = '', monthLabelsHTML = '', tickHTML = '';
+    let cursor = new Date(rangeStart); cursor.setDate(1);
+    if (cursor < rangeStart) cursor.setMonth(cursor.getMonth() + 1);
+    while (cursor <= rangeEnd) {
+      const x = daysBetween(rangeStart, cursor) * dayWidth;
+      gridHTML += `<div class="gantt-month-line" style="left:${labelWidth + x}px; height:${contentHeight}px;"></div>`;
+      monthLabelsHTML += `<div class="gantt-month-label" style="left:${x + 5}px;">${cursor.toLocaleDateString('en-GB', { month: 'short' })}</div>`;
+      cursor.setMonth(cursor.getMonth() + 1);
     }
-  });
+    for (let d = 0; d <= totalDays; d += 7) {
+      const dateObj = addDays(rangeStart, d);
+      tickHTML += `<div class="gantt-day-tick" style="left:${d * dayWidth + 3}px;">${dateObj.getDate()}</div>`;
+    }
 
-  const contentHeight = 34 + rows.length * 33;
+    const todayOffset = daysBetween(rangeStart, parseISO(todayISO()));
+    let todayLineHTML = '';
+    const clampedOffset = Math.max(0, Math.min(todayOffset, totalDays));
+    const elapsedHTML = `<div class="gantt-elapsed" style="left:${labelWidth}px; width:${clampedOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
+    if (todayOffset >= 0 && todayOffset <= totalDays) {
+      todayLineHTML = `<div class="gantt-today-line" style="left:${labelWidth + todayOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
+    }
 
-  let gridHTML = '', tickHTML = '';
-  let cursor = new Date(rangeStart); cursor.setDate(1);
-  if (cursor < rangeStart) cursor.setMonth(cursor.getMonth() + 1);
-  while (cursor <= rangeEnd) {
-    const x = labelWidth + daysBetween(rangeStart, cursor) * dayWidth;
-    gridHTML += `<div class="gantt-month-line" style="left:${x}px; height:${contentHeight}px;"></div><div class="gantt-month-label" style="left:${x + 5}px;">${cursor.toLocaleDateString('en-GB', { month: 'short' })}</div>`;
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  // weekly day-number ticks for scannable dates without clutter
-  for (let d = 0; d <= totalDays; d += 7) {
-    const dateObj = addDays(rangeStart, d);
-    const x = labelWidth + d * dayWidth;
-    tickHTML += `<div class="gantt-day-tick" style="left:${x + 3}px;">${dateObj.getDate()}</div>`;
-  }
-
-  const todayOffset = daysBetween(rangeStart, parseISO(todayISO()));
-  let todayLineHTML = '', elapsedHTML = '';
-  const clampedOffset = Math.max(0, Math.min(todayOffset, totalDays));
-  elapsedHTML = `<div class="gantt-elapsed" style="left:${labelWidth}px; width:${clampedOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
-  if (todayOffset >= 0 && todayOffset <= totalDays) {
-    todayLineHTML = `<div class="gantt-today-line" style="left:${labelWidth + todayOffset * dayWidth}px; height:${contentHeight}px;"></div>`;
+    return `
+      <div class="gantt-wrap">
+        <div class="gantt-header-row">
+          <div class="gantt-header-label">Task</div>
+          <div class="gantt-header-track" style="width:${canvasWidth}px;">${monthLabelsHTML}${tickHTML}</div>
+        </div>
+        ${elapsedHTML}${gridHTML}${todayLineHTML}
+        ${rowsHTML}
+      </div>`;
   }
 
   tabMount.innerHTML = `
     <div class="card gantt-card">
-      <div class="gantt-wrap">
-        <div class="gantt-header-row"><div class="gantt-header-label">Task</div><div style="width:${canvasWidth}px;"></div></div>
-        ${elapsedHTML}${gridHTML}${tickHTML}${todayLineHTML}
-        ${rowsHTML}
+      <div class="gantt-add-form">
+        <input type="text" class="gi-name" id="tlName" placeholder="Item name">
+        <input type="text" class="gi-cat" id="tlCat" placeholder="Category">
+        <input type="text" class="gi-owner" id="tlOwner" placeholder="Owner">
+        <input type="date" class="gi-date" id="tlStart">
+        <input type="date" class="gi-date" id="tlEnd">
+        <button id="tlAddBtn">Add item</button>
       </div>
+      ${buildBody()}
     </div>
-    <div class="card-sub" style="margin-top:10px; padding-left:4px;">Shaded area = time already elapsed · red line = today · hover a bar for its exact date</div>`;
+    <div class="card-sub" style="margin-top:10px; padding-left:4px;">Shaded area = time already elapsed · red line = today · hover a bar for its exact date · hover a row to delete it</div>`;
+
+  tabMount.querySelector('#tlAddBtn').addEventListener('click', () => {
+    const name = document.getElementById('tlName').value.trim();
+    const cat = document.getElementById('tlCat').value.trim();
+    const owner = document.getElementById('tlOwner').value.trim() || '—';
+    const start = document.getElementById('tlStart').value;
+    const end = document.getElementById('tlEnd').value || start;
+    if (!name || !cat || !start) return;
+    brandData().timeline.push({ task: name, cat, owner, dates: datesBetweenInclusive(start, end) });
+    Store.saveBrand(state.brand);
+    clickTick();
+    renderGantt();
+  });
+  tabMount.querySelectorAll('.gantt-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx, 10);
+      brandData().timeline.splice(idx, 1);
+      Store.saveBrand(state.brand);
+      renderGantt();
+    });
+  });
 }
 
 function renderTaskTracker() {
@@ -788,6 +892,7 @@ function navigate(view, opts = {}) {
 
 window.addEventListener('load', async () => {
   document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  renderYearCountdown();
   initCursor();
   initRipple();
 

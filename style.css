@@ -8,10 +8,10 @@
   --text-dim: #868C98;
   --text-faint: #B4B8C2;
 
-  --kdr: #FF7A45; --kdr-soft: rgba(255, 122, 69, 0.12);
-  --kvl: #5B6EF5; --kvl-soft: rgba(91, 110, 245, 0.12);
-  --kpv: #16A863; --kpv-soft: rgba(22, 168, 99, 0.12);
-  --neutral: #6D6AFB; --neutral-soft: rgba(109, 106, 251, 0.12);
+  --kdr: #14161B; --kdr-soft: rgba(20, 22, 27, 0.08);
+  --kvl: #565C68; --kvl-soft: rgba(86, 92, 104, 0.10);
+  --kpv: #868D99; --kpv-soft: rgba(134, 141, 153, 0.12);
+  --neutral: #12141A; --neutral-soft: rgba(18, 20, 26, 0.08);
 
   --accent: var(--kdr);
   --accent-soft: var(--kdr-soft);
@@ -50,7 +50,7 @@ body {
 
 .orb { position: fixed; border-radius: 50%; filter: blur(70px); opacity: 0.5; pointer-events: none; z-index: 0; transition: background 700ms ease; }
 .orb-1 { width: 480px; height: 480px; top: -140px; left: 260px; background: var(--accent-soft); animation: drift1 26s ease-in-out infinite; }
-.orb-2 { width: 380px; height: 380px; top: 320px; right: -80px; background: rgba(91,110,245,0.10); animation: drift2 32s ease-in-out infinite; }
+.orb-2 { width: 380px; height: 380px; top: 320px; right: -80px; background: rgba(20,22,27,0.05); animation: drift2 32s ease-in-out infinite; }
 @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(40px,60px) scale(1.1);} }
 @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(-50px,-30px) scale(1.05);} }
 
@@ -107,7 +107,7 @@ nav.main-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2
 .status-seg { height: 100%; transition: width 700ms cubic-bezier(0.16,1,0.3,1); }
 .status-seg.todo { background: var(--text-faint); }
 .status-seg.progress { background: var(--accent); }
-.status-seg.done { background: var(--kpv); }
+.status-seg.done { background: var(--good-text); }
 .status-legend { display: flex; gap: 18px; flex-wrap: wrap; }
 .status-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .status-legend-item .sw { width: 9px; height: 9px; border-radius: 3px; }
@@ -233,13 +233,14 @@ nav.main-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2
 .gantt-card { padding: 0; overflow: hidden; }
 .gantt-wrap { overflow: auto; max-height: 560px; position: relative; }
 .gantt-header-row { display: flex; position: sticky; top: 0; z-index: 3; background: var(--card); border-bottom: 1px solid var(--card-border); height: 34px; }
-.gantt-header-label { position: sticky; left: 0; width: 200px; flex-shrink: 0; background: var(--card); z-index: 4; display: flex; align-items: center; padding: 0 14px; font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; border-right: 1px solid var(--card-border); }
+.gantt-header-label { position: sticky; left: 0; width: 230px; flex-shrink: 0; background: var(--card); z-index: 4; display: flex; align-items: center; padding: 0 14px; font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; border-right: 1px solid var(--card-border); }
+.gantt-header-track { position: relative; height: 100%; }
 .gantt-row { display: flex; position: relative; min-height: 32px; border-bottom: 1px solid var(--card-border); }
 .gantt-row.cat-row { background: #FAFAFD; }
-.gantt-label { position: sticky; left: 0; width: 200px; flex-shrink: 0; background: inherit; z-index: 2; padding: 0 14px; display: flex; align-items: center; font-size: 12px; font-weight: 600; border-right: 1px solid var(--card-border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gantt-label { position: sticky; left: 0; width: 230px; flex-shrink: 0; background: inherit; z-index: 2; padding: 6px 10px 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 12px; font-weight: 600; border-right: 1px solid var(--card-border); white-space: normal; line-height: 1.3; }
 .gantt-row.cat-row .gantt-label { font-size: 10.5px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; background: #FAFAFD; }
 .gantt-track { position: relative; flex-shrink: 0; }
-.gantt-bar { position: absolute; top: 5px; height: 20px; border-radius: 6px; background: var(--accent); transition: background 500ms ease; }
+.gantt-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 20px; border-radius: 6px; background: var(--accent); transition: background 500ms ease; }
 .gantt-month-line { position: absolute; top: 34px; bottom: 0; width: 1px; background: var(--card-border); z-index: 1; }
 .gantt-month-label { position: absolute; top: 8px; font-size: 10.5px; font-weight: 700; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; z-index: 3; }
 .gantt-today-line { position: absolute; top: 34px; bottom: 0; width: 2px; background: var(--behind-text); z-index: 2; }
@@ -263,3 +264,38 @@ nav.main-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2
 .gantt-day-tick { position: absolute; top: 20px; font-size: 9.5px; font-weight: 600; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; z-index: 1; }
 
 .todo-project-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+
+/* ---------- Gantt: delete button + add-item form ---------- */
+.gantt-delete-btn { opacity: 0; transition: opacity 150ms ease; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--card-border); background: var(--card); font-size: 11px; line-height: 1; color: var(--text-faint); flex-shrink: 0; }
+.gantt-row:hover .gantt-delete-btn { opacity: 1; }
+.gantt-add-form { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--card-border); }
+.gantt-add-form input { border: 1px solid var(--card-border); border-radius: 10px; padding: 9px 12px; font-size: 13px; font-family: 'Manrope', sans-serif; background: #FAFAFD; }
+.gantt-add-form .gi-name { flex: 1.4; min-width: 160px; }
+.gantt-add-form .gi-cat, .gantt-add-form .gi-owner { flex: 1; min-width: 110px; }
+.gantt-add-form .gi-date { flex: 1; min-width: 130px; }
+.gantt-add-form button { background: var(--accent); color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 0 18px; border-radius: 10px; transition: background 500ms ease, opacity 150ms ease; }
+.gantt-add-form button:hover { opacity: 0.88; }
+
+/* ---------- Year countdown (replaces profile box) ---------- */
+.year-countdown { margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 12px; border: 1px solid var(--card-border); }
+.hourglass-svg { width: 26px; height: 40px; flex-shrink: 0; color: var(--text); }
+.hg-grain { animation: hgGrainFall 1.3s linear infinite; }
+@keyframes hgGrainFall { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateY(4px); opacity: 0; } }
+.hg-sand-top, .hg-sand-bottom { transition: y 900ms ease, height 900ms ease; }
+.year-countdown-text .ycd-days { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; line-height: 1.1; }
+.year-countdown-text .ycd-label { font-size: 10px; color: var(--text-faint); font-weight: 600; margin-top: 2px; line-height: 1.3; }
+
+/* ---------- Custom dropdown (replaces native <select>) ---------- */
+.custom-select { position: relative; }
+.custom-select-btn { display: flex; align-items: center; gap: 8px; border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; background: #FAFAFD; font-size: 13px; font-weight: 600; font-family: 'Manrope', sans-serif; color: var(--text); }
+.csb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.csb-chev { width: 14px; height: 14px; margin-left: 2px; transition: transform 220ms cubic-bezier(0.16,1,0.3,1); }
+.custom-select-btn.open .csb-chev { transform: rotate(180deg); }
+.custom-select-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 140px; background: var(--card); border: 1px solid var(--card-border); border-radius: 12px; box-shadow: var(--shadow-hover); padding: 6px; opacity: 0; transform: translateY(-6px) scale(0.97); pointer-events: none; transition: opacity 180ms ease, transform 180ms cubic-bezier(0.16,1,0.3,1); z-index: 20; }
+.custom-select-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.custom-select-opt { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.custom-select-opt:hover { background: #F3F4F9; }
+
+/* ---------- Global tactile button feedback ---------- */
+button { transition: transform 120ms ease; }
+button:active { transform: scale(0.95); }
