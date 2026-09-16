@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ekk-hub-v1';
-const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = 'ekk-hub-v2';
+const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png', './infinity-logo.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -17,12 +17,19 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for the app shell; network for everything else (Firestore, fonts, etc.)
+// Network-first: always fetch the latest version when online, so edits
+// show up immediately. Only fall back to the cached copy when offline.
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
   }
 });
