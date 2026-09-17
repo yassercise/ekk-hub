@@ -131,10 +131,9 @@ function projectNameFor(brandKey, projectId) { const p = DATA[brandKey].projects
 
 function recomputeTaskStatus(t) {
   if (!t.subtasks || !t.subtasks.length) return;
+  if (t.status === 'done') return;
   const doneCount = t.subtasks.filter(s => s.done).length;
-  if (doneCount === 0) t.status = 'todo';
-  else if (doneCount === t.subtasks.length) t.status = 'done';
-  else t.status = 'progress';
+  t.status = doneCount === 0 ? 'todo' : 'progress';
 }
 
 function dueUnitsForBrand(brandKey) {
@@ -282,7 +281,7 @@ function toggleItem(item) {
 function completedCountInRange(startISO, endISO) {
   let n = 0;
   (DATA.todos || []).forEach(t => { if (t.completedAt && inRange(t.completedAt, startISO, endISO)) n++; });
-  BRAND_KEYS.forEach(b => dueUnitsForBrand(b).forEach(u => { const c = unitCompletedAt(u); if (c && inRange(c, startISO, endISO)) n++; }));
+  BRAND_KEYS.forEach(b => dueUnitsForBrand(b).forEach(u => { const c = unitCompletedAt(u); if (unitDue(u) && c && inRange(c, startISO, endISO)) n++; }));
   return n;
 }
 
@@ -437,18 +436,30 @@ function buildKebabMenu(container, actions) {
     dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); list[i].onClick(); }));
   }
   renderActions(actions);
+  function positionDropdown() {
+    const rect = btn.getBoundingClientRect();
+    const ddRect = dd.getBoundingClientRect();
+    let left = rect.right - ddRect.width;
+    let top = rect.bottom + 6;
+    if (top + ddRect.height > window.innerHeight - 8) top = rect.top - ddRect.height - 6;
+    if (left < 8) left = 8;
+    if (left + ddRect.width > window.innerWidth - 8) left = window.innerWidth - ddRect.width - 8;
+    dd.style.position = 'fixed';
+    dd.style.left = left + 'px';
+    dd.style.top = top + 'px';
+    dd.style.right = 'auto';
+  }
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = '';
     if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
-    else { openExclusive(() => dd.classList.remove('open'), () => dd.classList.add('open')); }
+    else { openExclusive(() => dd.classList.remove('open'), () => { positionDropdown(); dd.classList.add('open'); }); }
   });
   document.addEventListener('click', () => dd.classList.remove('open'));
   return {
     close: () => dd.classList.remove('open'),
     setActions: renderActions,
     dd,
-    open: () => { dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = ''; dd.classList.add('open'); },
+    open: () => { positionDropdown(); dd.classList.add('open'); },
     openAt: (x, y) => {
       dd.style.position = 'fixed';
       dd.style.right = 'auto';
@@ -1142,6 +1153,30 @@ function renderGantt() {
   });
 }
 
+function mountPriorityPicker(container, t, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'kebab-menu';
+  wrap.innerHTML = `<button type="button" class="priority-pill ${t.priority}" style="cursor:pointer;">${t.priority}</button><div class="kebab-dropdown"></div>`;
+  container.appendChild(wrap);
+  const btn = wrap.querySelector('button'), dd = wrap.querySelector('.kebab-dropdown');
+  const options = ['high', 'medium', 'low'];
+  dd.innerHTML = options.map((p, i) => `<button type="button" class="kebab-item" data-i="${i}">${p.charAt(0).toUpperCase() + p.slice(1)}</button>`).join('');
+  dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.remove('open'); t.priority = options[i]; onChange(); }));
+  function positionDropdown() {
+    const rect = btn.getBoundingClientRect(), ddRect = dd.getBoundingClientRect();
+    let left = rect.left, top = rect.bottom + 6;
+    if (top + ddRect.height > window.innerHeight - 8) top = rect.top - ddRect.height - 6;
+    if (left + ddRect.width > window.innerWidth - 8) left = window.innerWidth - ddRect.width - 8;
+    dd.style.position = 'fixed'; dd.style.left = left + 'px'; dd.style.top = top + 'px'; dd.style.right = 'auto';
+  }
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
+    else { openExclusive(() => dd.classList.remove('open'), () => { positionDropdown(); dd.classList.add('open'); }); }
+  });
+  document.addEventListener('click', () => dd.classList.remove('open'));
+}
+
 function renderAddTaskForm(container, projectId) {
   const wrap = document.createElement('div');
   wrap.className = 'add-project-form';
@@ -1227,11 +1262,11 @@ function renderTaskTracker() {
     const hasSubtasks = t.subtasks.length > 0;
     item.innerHTML = `
       <div class="task-row">
-        <div class="task-complete-btn ${isDone ? 'done' : ''} ${hasSubtasks ? 'derived' : ''}" data-task="${t.id}" title="${hasSubtasks ? 'Status follows subtasks' : ''}">${isDone ? '✓' : ''}</div>
-        <div class="task-title-cell"><div class="t-title"></div><div class="t-cat">${t.cat} · ${t.owner}</div></div>
-        <div><span class="priority-pill ${t.priority}">${t.priority}</span></div>
+        <div class="task-complete-btn ${isDone ? 'done' : ''}" data-task="${t.id}">${isDone ? '✓' : ''}</div>
+        <div class="task-title-cell"><div class="t-title"></div><div class="t-cat"><span class="t-cat-edit"></span> · <span class="t-owner-edit"></span></div></div>
+        <div class="task-priority-mount"></div>
         <div><span class="status-pill ${t.status}">${t.status === 'todo' ? 'To Do' : t.status === 'progress' ? 'In Progress' : 'Done'}</span></div>
-        <div class="task-due ${t.due && t.due < todayISO() && t.status !== 'done' ? 'overdue' : ''}">${t.due || '—'}</div>
+        <div class="task-due-mount"></div>
         <div class="task-sub-count">${t.subtasks.length ? doneCount + '/' + t.subtasks.length : '—'}</div>
         <div class="task-row-kebab-mount"></div>
       </div>
@@ -1251,22 +1286,32 @@ function renderTaskTracker() {
       </div>`;
     item.querySelector('.t-title').textContent = t.title;
     makeInlineEditable(item.querySelector('.t-title'), () => t.title, (val) => { t.title = val; Store.saveBrand(state.brand); });
-    buildKebabMenu(item.querySelector('.task-row-kebab-mount'), [
+    item.querySelector('.t-cat-edit').textContent = t.cat;
+    makeInlineEditable(item.querySelector('.t-cat-edit'), () => t.cat, (val) => { t.cat = val; Store.saveBrand(state.brand); });
+    item.querySelector('.t-owner-edit').textContent = t.owner;
+    makeInlineEditable(item.querySelector('.t-owner-edit'), () => t.owner, (val) => { t.owner = val; Store.saveBrand(state.brand); });
+    mountPriorityPicker(item.querySelector('.task-priority-mount'), t, () => { Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
+    createDatePicker(item.querySelector('.task-due-mount'), t.due || null, (iso) => { t.due = iso || ''; Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
+    const taskKebab = buildKebabMenu(item.querySelector('.task-row-kebab-mount'), [
       { label: 'Delete task', danger: true, onClick: () => { const idx = brandData().tasks.indexOf(t); brandData().tasks.splice(idx, 1); Store.saveBrand(state.brand); renderTaskTracker(); } }
     ]);
+    item.querySelector('.task-row').addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openExclusive(taskKebab.close, () => taskKebab.openAt(e.clientX, e.clientY));
+    });
     item.querySelector('.task-row').addEventListener('click', (e) => {
       if (e.target.closest('.task-complete-btn, .kebab-menu, .inline-editable, input, button')) return;
       state.expandedTask = isOpen ? null : t.id; renderTaskTracker();
     });
-    if (!hasSubtasks) {
-      item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        setUnitDone({ kind: 'task', ref: t }, state.brand, t.status !== 'done', todayISO());
-        t.status === 'done' ? completeChime() : uncheckTick();
-        item.classList.add('completing');
-        setTimeout(() => renderTaskTracker(), 340);
-      });
-    }
+    item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasDone = t.status === 'done';
+      setUnitDone({ kind: 'task', ref: t }, state.brand, !wasDone, todayISO());
+      if (wasDone) { recomputeTaskStatus(t); Store.saveBrand(state.brand); }
+      wasDone ? uncheckTick() : completeChime();
+      item.classList.add('completing');
+      setTimeout(() => renderTaskTracker(), 340);
+    });
     list.appendChild(item);
 
     if (isOpen) {
@@ -1287,6 +1332,16 @@ function renderTaskTracker() {
           </div>`;
         sub.appendChild(row);
         createDatePicker(row.querySelector('.subtask-due-slot'), s.due || null, (iso) => { s.due = iso || ''; Store.saveBrand(state.brand); clickTick(); });
+        const subKebabMount = document.createElement('div');
+        row.appendChild(subKebabMount);
+        const subKebab = buildKebabMenu(subKebabMount, [
+          { label: 'Delete subtask', danger: true, onClick: () => { t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); } }
+        ]);
+        subKebabMount.querySelector('.kebab-btn').style.display = 'none';
+        row.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          openExclusive(subKebab.close, () => subKebab.openAt(e.clientX, e.clientY));
+        });
         row.querySelector('.subtask-check').addEventListener('click', (e) => {
           e.stopPropagation();
           const nowDone = !s.done;
