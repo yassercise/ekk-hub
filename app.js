@@ -758,7 +758,7 @@ function renderGantt() {
   const tabMount = document.getElementById('tabMount');
   const timeline = brandData().timeline;
   const dayWidth = 14;
-  const labelWidth = 230;
+  const labelWidth = window.innerWidth <= 760 ? 140 : 230;
 
   function buildBody() {
     if (!timeline.length) return `<div class="empty-page"><div class="t">No timeline yet</div><div class="s">Add your first scheduled item above.</div></div>`;
@@ -1028,12 +1028,22 @@ function navigate(view, opts = {}) {
    INIT
    ============================================================ */
 
+function closeMobileDrawer() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
 window.addEventListener('load', async () => {
   renderYearCountdown();
   initCursor();
   initRipple();
-  document.querySelectorAll('.brand-tab').forEach(tab => tab.addEventListener('click', () => { state.brand = tab.dataset.brand; clickTick(); navigate('overview'); }));
-  document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { clickTick(); navigate(item.dataset.nav === 'overview' ? 'global-overview' : item.dataset.nav); }));
+  document.getElementById('hamburgerBtn').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('sidebarBackdrop').classList.toggle('open');
+  });
+  document.getElementById('sidebarBackdrop').addEventListener('click', closeMobileDrawer);
+  document.querySelectorAll('.brand-tab').forEach(tab => tab.addEventListener('click', () => { state.brand = tab.dataset.brand; clickTick(); closeMobileDrawer(); navigate('overview'); }));
+  document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { clickTick(); closeMobileDrawer(); navigate(item.dataset.nav === 'overview' ? 'global-overview' : item.dataset.nav); }));
   document.getElementById('viewMount').innerHTML = `<div style="padding:40px; color:var(--text-dim); font-size:13px;">Loading your data…</div>`;
   await signInAnonymously(auth);
   DATA = await Store.loadAll();

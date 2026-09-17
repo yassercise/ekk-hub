@@ -1,5 +1,5 @@
 const CACHE_NAME = 'ekk-hub-v2';
-const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png', './infinity-logo.png'];
+const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png', './infinity-logo.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
