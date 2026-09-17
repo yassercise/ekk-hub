@@ -378,18 +378,23 @@ function createDatePicker(container, initialISO, onChange) {
   const labelText = () => selected ? fmtDateShort(selected) : 'Set date';
 
   wrap.innerHTML = `
-    <button type="button" class="date-picker-btn">
+    <div class="date-picker-btn" role="button" tabindex="0">
       <svg class="dp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
       <span class="dp-label">${labelText()}</span>
-    </button>
+    </div>
     <div class="date-picker-menu">
-      <div class="dp-header"><button type="button" class="dp-nav" data-dir="-1">‹</button><div class="dp-month-label"></div><button type="button" class="dp-nav" data-dir="1">›</button></div>
+      <div class="dp-header"><div class="dp-nav" role="button" tabindex="0" data-dir="-1">‹</div><div class="dp-month-label"></div><div class="dp-nav" role="button" tabindex="0" data-dir="1">›</div></div>
       <div class="dp-grid"></div>
-      <div class="dp-footer"><button type="button" class="dp-clear">Clear</button><button type="button" class="dp-today-btn">Today</button></div>
+      <div class="dp-footer"><div class="dp-clear" role="button" tabindex="0">Clear</div><div class="dp-today-btn" role="button" tabindex="0">Today</div></div>
     </div>`;
   container.appendChild(wrap);
 
   const btn = wrap.querySelector('.date-picker-btn'), menu = wrap.querySelector('.date-picker-menu'), grid = wrap.querySelector('.dp-grid'), monthLabel = wrap.querySelector('.dp-month-label'), labelEl = wrap.querySelector('.dp-label');
+
+  function actionable(el, handler) {
+    el.addEventListener('click', (e) => { e.stopPropagation(); handler(e); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handler(e); } });
+  }
 
   function renderGrid() {
     monthLabel.textContent = viewMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
@@ -400,25 +405,25 @@ function createDatePicker(container, initialISO, onChange) {
     for (let i = 0; i < first.getDay(); i++) grid.appendChild(document.createElement('div'));
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = fmt(new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d));
-      const cell = document.createElement('button');
-      cell.type = 'button';
+      const cell = document.createElement('div');
+      cell.setAttribute('role', 'button');
+      cell.tabIndex = 0;
       cell.className = 'dp-day' + (iso === selected ? ' selected' : '') + (iso === todayISO() ? ' is-today' : '');
       cell.textContent = d;
-      cell.addEventListener('click', (e) => { e.stopPropagation(); selected = iso; labelEl.textContent = labelText(); onChange(selected); close(); });
+      actionable(cell, () => { selected = iso; labelEl.textContent = labelText(); onChange(selected); close(); });
       grid.appendChild(cell);
     }
   }
   function open() { menu.classList.add('open'); renderGrid(); }
   function close() { menu.classList.remove('open'); }
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  actionable(btn, () => {
     if (menu.classList.contains('open')) { close(); activePopoverClose = null; }
     else { openExclusive(close, open); }
   });
-  wrap.querySelectorAll('.dp-nav').forEach(nb => nb.addEventListener('click', (e) => { e.stopPropagation(); viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); }));
-  wrap.querySelector('.dp-clear').addEventListener('click', (e) => { e.stopPropagation(); selected = null; labelEl.textContent = labelText(); onChange(null); close(); });
-  wrap.querySelector('.dp-today-btn').addEventListener('click', (e) => { e.stopPropagation(); selected = todayISO(); viewMonth = new Date(); labelEl.textContent = labelText(); onChange(selected); close(); });
+  wrap.querySelectorAll('.dp-nav').forEach(nb => actionable(nb, () => { viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); }));
+  actionable(wrap.querySelector('.dp-clear'), () => { selected = null; labelEl.textContent = labelText(); onChange(null); close(); });
+  actionable(wrap.querySelector('.dp-today-btn'), () => { selected = todayISO(); viewMonth = new Date(); labelEl.textContent = labelText(); onChange(selected); close(); });
   document.addEventListener('click', close);
 
   return { getValue: () => selected };
