@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #F3F4F9;
   --card: #FFFFFF;
   --card-border: rgba(17, 17, 38, 0.06);
@@ -519,3 +520,110 @@ button:active { transform: scale(0.95); }
 .week-row:hover { background: #FAFAFD; }
 .week-row .w-range { font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .week-row .w-count { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: var(--good-text); }
+
+/* ---------- Strip native OS appearance from every control, everywhere ---------- */
+button, input, select, textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* ---------- Passive complete-button when status is subtask-derived ---------- */
+.task-complete-btn.derived { opacity: 0.35; cursor: default; }
+
+/* ============================================================
+   UNIFIED CONTROL STYLING — every selector/date/submit button
+   across every form now shares one consistent, light, technical
+   look, matched in height to the text fields beside them.
+   ============================================================ */
+
+.custom-select-btn,
+.date-picker-btn,
+.status-pill-btn,
+.qd-btn,
+.add-project-form input,
+.add-project-form button,
+.gantt-add-form input,
+.gantt-add-form button,
+.add-todo-row input,
+.add-todo-row button,
+.unscheduled-add-row input,
+.unscheduled-add-row button,
+.add-subtask-row input,
+.add-subtask-row button {
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.custom-select-btn,
+.date-picker-btn,
+.status-pill-btn,
+.qd-btn,
+.add-project-form button,
+.gantt-add-form button,
+.add-todo-row button,
+.unscheduled-add-row button,
+.add-subtask-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  transition: border-color 200ms ease, box-shadow 200ms ease, color 200ms ease, transform 120ms ease, background 200ms ease;
+}
+.custom-select-btn:hover,
+.date-picker-btn:hover,
+.status-pill-btn:hover,
+.qd-btn:hover,
+.add-project-form button:hover,
+.gantt-add-form button:hover,
+.add-todo-row button:hover,
+.unscheduled-add-row button:hover,
+.add-subtask-row button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+/* Submit/primary actions: same light base, distinguished by accent-colored text + border only */
+.add-project-form button,
+.gantt-add-form button,
+.add-todo-row button,
+.unscheduled-add-row button,
+.add-subtask-row button {
+  font-weight: 700;
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+.add-project-form button:hover,
+.gantt-add-form button:hover,
+.add-todo-row button:hover,
+.unscheduled-add-row button:hover,
+.add-subtask-row button:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-soft);
+}
+
+.add-project-form input,
+.gantt-add-form input,
+.add-todo-row input,
+.unscheduled-add-row input,
+.add-subtask-row input {
+  font-family: 'Manrope', sans-serif;
+}
+
+.status-pill-btn.good { color: var(--good-text); border-color: rgba(22,168,99,0.25); background: var(--good-bg); }
+.status-pill-btn.risk { color: var(--risk-text); border-color: rgba(245,166,35,0.3); background: var(--risk-bg); }
+.status-pill-btn .csb-chev { width: 12px; height: 12px; margin-left: 2px; }

@@ -58,6 +58,7 @@ const Store = {
         data.projects.forEach(p => {
           if (!p.files) p.files = [];
           if (!p.status) p.status = 'active';
+          if (p.healthStatus === undefined) p.healthStatus = null;
           if (!p.startDate) {
             if (p.id === 'racing-game') { p.startDate = '2026-08-12'; p.endDate = '2026-12-15'; }
             else { p.startDate = todayISO(); p.endDate = fmt(addDays(new Date(), 90)); }
@@ -66,6 +67,7 @@ const Store = {
         (data.tasks || []).forEach(t => {
           if (data.projects.length === 1 && !t.projectId) t.projectId = data.projects[0].id;
           (t.subtasks || []).forEach(s => { if (s.due === undefined) s.due = ''; if (s.notes === undefined) s.notes = ''; if (s.completedAt === undefined) s.completedAt = null; });
+          recomputeTaskStatus(t);
         });
       } else {
         data = structuredClone(SEED[brandKey]);
@@ -126,6 +128,14 @@ function projectNameFor(brandKey, projectId) { const p = DATA[brandKey].projects
    and when." A unit is a subtask (preferred) or, for a task with
    no subtasks, the task itself as a fallback so nothing gets lost.
    ============================================================ */
+
+function recomputeTaskStatus(t) {
+  if (!t.subtasks || !t.subtasks.length) return;
+  const doneCount = t.subtasks.filter(s => s.done).length;
+  if (doneCount === 0) t.status = 'todo';
+  else if (doneCount === t.subtasks.length) t.status = 'done';
+  else t.status = 'progress';
+}
 
 function dueUnitsForBrand(brandKey) {
   const units = [];
@@ -243,7 +253,7 @@ function itemsForDate(dateISO) {
     dueUnitsForBrand(brandKey).forEach(u => {
       const due = unitDue(u), done = unitDone(u), completedAt = unitCompletedAt(u);
       if (due === dateISO) items.push({ ...u, overdue: false });
-      else if (done && completedAt === dateISO) items.push({ ...u, overdue: false });
+      else if (due && done && completedAt === dateISO) items.push({ ...u, overdue: false });
       else if (dateISO === todayISO() && due && due < todayISO() && !done) items.push({ ...u, overdue: true });
     });
   });
@@ -536,7 +546,7 @@ function renderAddProjectForm(container, brandKeyFixed) {
     const startDate = startPicker.getValue() || todayISO();
     const endDate = endPicker.getValue() || fmt(addDays(startDate, 90));
     if (!name) return;
-    DATA[brandKey].projects.push({ id: uid(), name, startDate, endDate, type: 'Project', status: 'active', files: [] });
+    DATA[brandKey].projects.push({ id: uid(), name, startDate, endDate, type: 'Project', status: 'active', healthStatus: null, files: [] });
     Store.saveBrand(brandKey);
     clickTick();
     navigate(state.view);
@@ -547,10 +557,34 @@ function projectRowHTML(brandKey, p) {
   const counts = computeProjectCounts(brandKey, p.id);
   const daysLeft = daysBetween(parseISO(todayISO()), parseISO(p.endDate));
   const closed = p.status === 'closed';
-  const statusHTML = closed ? `<span class="status-pill closed">Closed</span>` : `<span class="status-pill ${counts.pct >= 50 ? 'good' : 'risk'}">${counts.pct >= 50 ? 'On track' : 'At risk'}</span>`;
   const daysHTML = closed ? '—' : (daysLeft > 0 ? daysLeft + 'd' : 'Ended');
-  return { counts, daysHTML, statusHTML,
+  return { counts, daysHTML, closed,
     metaLine: `${fmtDateShort(p.startDate)} – ${fmtDateShort(p.endDate)} · ${counts.mainTotal} tasks · ${counts.subRemaining} subtasks left` };
+}
+
+function mountProjectStatus(container, brandKey, p, counts, closed) {
+  if (closed) { container.innerHTML = `<span class="status-pill closed">Closed</span>`; return; }
+  const effective = p.healthStatus || (counts.pct >= 50 ? 'good' : 'risk');
+  const label = effective === 'good' ? 'On track' : 'At risk';
+  const wrap = document.createElement('div');
+  wrap.className = 'kebab-menu';
+  wrap.innerHTML = `<button type="button" class="status-pill-btn ${effective}">${label}<svg class="csb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button><div class="kebab-dropdown"></div>`;
+  container.appendChild(wrap);
+  const btn = wrap.querySelector('.status-pill-btn'), dd = wrap.querySelector('.kebab-dropdown');
+  function save() { Store.saveBrand(brandKey); clickTick(); navigate(state.view); }
+  const options = [
+    { label: 'On track', onClick: () => { p.healthStatus = 'good'; save(); } },
+    { label: 'At risk', onClick: () => { p.healthStatus = 'risk'; save(); } },
+    { label: 'Auto (based on completion)', onClick: () => { p.healthStatus = null; save(); } }
+  ];
+  dd.innerHTML = options.map((o, i) => `<button type="button" class="kebab-item" data-i="${i}">${o.label}</button>`).join('');
+  dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.remove('open'); options[i].onClick(); }));
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
+    else { openExclusive(() => dd.classList.remove('open'), () => dd.classList.add('open')); }
+  });
+  document.addEventListener('click', () => dd.classList.remove('open'));
 }
 
 /* ============================================================
@@ -629,15 +663,16 @@ function renderBrandOverview() {
   const projectList = document.getElementById('projectList');
   if (!projects.length) { projectList.innerHTML = `<div class="empty-row"><div class="t">Nothing running yet</div><div class="s">Add your first project above.</div></div>`; }
   else projects.forEach(p => {
-    const { counts, daysHTML, statusHTML, metaLine } = projectRowHTML(state.brand, p);
+    const { counts, daysHTML, closed, metaLine } = projectRowHTML(state.brand, p);
     const row = document.createElement('div');
     row.className = 'campaign-row';
     row.innerHTML = `
       <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">${metaLine}</div></div>
       <div><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">${counts.pct}%</div></div>
-      <div>${statusHTML}</div>
+      <div class="status-mount"></div>
       <div style="text-align:right; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;">${daysHTML}</div>`;
-    row.addEventListener('click', () => navigate('project', { projectId: p.id }));
+    row.addEventListener('click', (e) => { if (e.target.closest('.kebab-menu')) return; navigate('project', { projectId: p.id }); });
+    mountProjectStatus(row.querySelector('.status-mount'), state.brand, p, counts, closed);
     projectList.appendChild(row);
     requestAnimationFrame(() => { row.querySelector('.progress-fill').style.width = counts.pct + '%'; });
   });
@@ -952,7 +987,7 @@ function renderAllProjectsGlobal() {
     const meta = BRAND_META[brandKey];
     DATA[brandKey].projects.forEach(p => {
       any = true;
-      const { counts, statusHTML, metaLine } = projectRowHTML(brandKey, p);
+      const { counts, closed, metaLine } = projectRowHTML(brandKey, p);
       const row = document.createElement('div');
       row.className = 'campaign-row';
       row.style.gridTemplateColumns = '2fr 90px 1fr 1fr';
@@ -960,8 +995,9 @@ function renderAllProjectsGlobal() {
         <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">${metaLine}</div></div>
         <div><span class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandKey.toUpperCase()}</span></div>
         <div><div class="progress-track"><div class="progress-fill" style="width:${counts.pct}%"></div></div><div class="progress-label">${counts.pct}%</div></div>
-        <div>${statusHTML}</div>`;
-      row.addEventListener('click', () => { state.brand = brandKey; navigate('project', { projectId: p.id }); });
+        <div class="status-mount"></div>`;
+      row.addEventListener('click', (e) => { if (e.target.closest('.kebab-menu')) return; state.brand = brandKey; navigate('project', { projectId: p.id }); });
+      mountProjectStatus(row.querySelector('.status-mount'), brandKey, p, counts, closed);
       list.appendChild(row);
     });
   });
@@ -1132,6 +1168,7 @@ function renderAddTaskForm(container, projectId) {
   container.appendChild(wrap);
 
   const duePicker = createDatePicker(document.getElementById('newTaskDueSlot'), null, () => {});
+  wrap.querySelector('#newTaskTitle').addEventListener('keydown', (e) => { if (e.key === 'Enter') wrap.querySelector('#newTaskSubmit').click(); });
 
   const pBtn = wrap.querySelector('#priorityPickerBtn'), pMenu = wrap.querySelector('#priorityPickerMenu');
   pBtn.addEventListener('click', (e) => {
@@ -1187,9 +1224,10 @@ function renderTaskTracker() {
     const isDone = t.status === 'done';
     const item = document.createElement('div');
     item.className = 'task-item' + (isDone ? ' is-done' : '');
+    const hasSubtasks = t.subtasks.length > 0;
     item.innerHTML = `
       <div class="task-row">
-        <div class="task-complete-btn ${isDone ? 'done' : ''}" data-task="${t.id}">${isDone ? '✓' : ''}</div>
+        <div class="task-complete-btn ${isDone ? 'done' : ''} ${hasSubtasks ? 'derived' : ''}" data-task="${t.id}" title="${hasSubtasks ? 'Status follows subtasks' : ''}">${isDone ? '✓' : ''}</div>
         <div class="task-title-cell"><div class="t-title"></div><div class="t-cat">${t.cat} · ${t.owner}</div></div>
         <div><span class="priority-pill ${t.priority}">${t.priority}</span></div>
         <div><span class="status-pill ${t.status}">${t.status === 'todo' ? 'To Do' : t.status === 'progress' ? 'In Progress' : 'Done'}</span></div>
@@ -1220,13 +1258,15 @@ function renderTaskTracker() {
       if (e.target.closest('.task-complete-btn, .kebab-menu, .inline-editable, input, button')) return;
       state.expandedTask = isOpen ? null : t.id; renderTaskTracker();
     });
-    item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      setUnitDone({ kind: 'task', ref: t }, state.brand, t.status !== 'done', todayISO());
-      t.status === 'done' ? completeChime() : uncheckTick();
-      item.classList.add('completing');
-      setTimeout(() => renderTaskTracker(), 340);
-    });
+    if (!hasSubtasks) {
+      item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        setUnitDone({ kind: 'task', ref: t }, state.brand, t.status !== 'done', todayISO());
+        t.status === 'done' ? completeChime() : uncheckTick();
+        item.classList.add('completing');
+        setTimeout(() => renderTaskTracker(), 340);
+      });
+    }
     list.appendChild(item);
 
     if (isOpen) {
@@ -1251,13 +1291,14 @@ function renderTaskTracker() {
           e.stopPropagation();
           const nowDone = !s.done;
           s.done = nowDone; s.completedAt = nowDone ? todayISO() : null;
+          recomputeTaskStatus(t);
           Store.saveBrand(state.brand);
           nowDone ? completeChime() : uncheckTick();
           renderTaskTracker();
         });
         row.querySelector('.subtask-text-input').addEventListener('change', (e) => { s.text = e.target.value.trim() || s.text; Store.saveBrand(state.brand); });
         row.querySelector('.subtask-notes-input').addEventListener('change', (e) => { s.notes = e.target.value; Store.saveBrand(state.brand); });
-        row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); t.subtasks = t.subtasks.filter(x => x.id !== s.id); Store.saveBrand(state.brand); renderTaskTracker(); });
+        row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); });
       });
       item.querySelector('.addSubBtn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1265,6 +1306,7 @@ function renderTaskTracker() {
         const text = input.value.trim();
         if (!text) return;
         t.subtasks.push({ id: uid(), text, done: false, due: '', notes: '', completedAt: null });
+        recomputeTaskStatus(t);
         Store.saveBrand(state.brand);
         clickTick();
         renderTaskTracker();
