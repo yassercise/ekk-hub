@@ -26,13 +26,17 @@ const RAW_TIMELINE_KDR = JSON.parse(`[{"task":"Weekly build-up post #1 (cryptic)
 const SEED = {
   kdr: { projects: [{ id: 'racing-game', name: 'Racing Game — Marketing Campaign', startDate: '2026-08-12', endDate: '2026-12-15', type: 'Campaign', status: 'active', files: [] }], tasks: RAW_TASKS_KDR, timeline: RAW_TIMELINE_KDR },
   kvl: { projects: [], tasks: [], timeline: [] },
-  kpv: { projects: [], tasks: [], timeline: [] }
+  kpv: { projects: [], tasks: [], timeline: [] },
+  gst: { projects: [], tasks: [], timeline: [] },
+  gtg: { projects: [], tasks: [], timeline: [] }
 };
-const BRAND_KEYS = ['kdr', 'kvl', 'kpv'];
+const BRAND_KEYS = ['kdr', 'kvl', 'kpv', 'gst', 'gtg'];
 const BRAND_META = {
   kdr: { color: '#14161B', soft: 'rgba(20,22,27,0.08)', label: 'KDR · DAILY RENTAL' },
   kvl: { color: '#565C68', soft: 'rgba(86,92,104,0.10)', label: 'KVL · VEHICLE LEASING' },
-  kpv: { color: '#868D99', soft: 'rgba(134,141,153,0.12)', label: 'KPV · PRE-OWNED VEHICLES' }
+  kpv: { color: '#868D99', soft: 'rgba(134,141,153,0.12)', label: 'KPV · PRE-OWNED VEHICLES' },
+  gst: { color: '#2B2E35', soft: 'rgba(43,46,53,0.09)', label: 'GST · GOLDEN STITCH' },
+  gtg: { color: '#9DA3AD', soft: 'rgba(157,163,173,0.14)', label: 'GTG · GOLDEN TAG' }
 };
 const NEUTRAL = { color: '#12141A', soft: 'rgba(18,20,26,0.08)' };
 
@@ -700,6 +704,14 @@ function openPickDateMenu(kebab, item) {
   document.querySelector('#kebabDateSlot .date-picker-btn').click();
 }
 
+function openBrandAssignMenu(kebab, item) {
+  const list = BRAND_KEYS.map(b => ({
+    label: `<span class="csb-dot" style="background:${BRAND_META[b].color}; display:inline-block; margin-right:8px;"></span>${b.toUpperCase()}`,
+    onClick: () => { item.ref.brand = b; Store.saveTodos(); clickTick(); navigate('todo'); }
+  }));
+  kebab.setActions([{ label: '← Back', back: true, onClick: () => kebab.setActions(baseKebabActionsFor(item, kebab)) }, ...list]);
+}
+
 function openProjectAssignMenu(kebab, item) {
   const projects = allProjectsFlat();
   const list = projects.length
@@ -717,6 +729,7 @@ function baseKebabActionsFor(item, kebab) {
   ];
   if (item.kind === 'todo') {
     actions.push({ label: 'Remove date (unschedule)', onClick: () => { setItemDate(item, null); clickTick(); navigate('todo'); } });
+    actions.push({ label: item.ref.brand ? 'Change brand…' : 'Set brand…', onClick: () => openBrandAssignMenu(kebab, item) });
     actions.push({ label: 'Assign to project…', onClick: () => openProjectAssignMenu(kebab, item) });
   }
   actions.push({ label: 'Delete', danger: true, onClick: () => deleteTodoItem(item) });
