@@ -35,8 +35,7 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  body { cursor: none; }
-  a, button, .campaign-row, .task-row, .check, .subtask-check, .nav-item, .brand-tab, .filter-tab, .view-tab, .day-tab, .task-complete-btn { cursor: none; }
+  *, *::before, *::after { cursor: none !important; }
 }
 
 .cursor-dot, .cursor-ring { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; border-radius: 50%; transform: translate(-50%, -50%); }
@@ -501,3 +500,21 @@ button:active { transform: scale(0.95); }
   }
   .sidebar { padding-top: calc(env(titlebar-area-height, 38px) + 14px); }
 }
+
+/* ---------- Day-tab completed count ---------- */
+.day-tab .ddone { font-size: 10px; color: var(--good-text); font-weight: 700; margin-top: 1px; min-height: 12px; }
+
+/* ---------- Day/Summary toggle + summary view ---------- */
+.todo-mode-tabs { display: flex; gap: 6px; margin-bottom: 16px; background: var(--card); border: 1px solid var(--card-border); border-radius: 12px; padding: 4px; width: fit-content; }
+.todo-mode-tab { padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--text-dim); border: none; background: none; font-family: 'Manrope', sans-serif; }
+.todo-mode-tab.active { background: var(--accent-soft); color: var(--accent); }
+.month-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid var(--card-border); }
+.month-row:hover { background: #FAFAFD; }
+.month-row .m-name { font-weight: 700; font-size: 14px; }
+.month-row .m-count { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.month-weeks { display: none; padding: 4px 20px 16px; }
+.month-weeks.open { display: block; }
+.week-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; }
+.week-row:hover { background: #FAFAFD; }
+.week-row .w-range { font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
+.week-row .w-count { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: var(--good-text); }
