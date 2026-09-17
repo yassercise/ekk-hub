@@ -417,14 +417,25 @@ function createDatePicker(container, initialISO, onChange, placeholder) {
       grid.appendChild(cell);
     }
   }
-  function open() { menu.classList.add('open'); renderGrid(); }
+  function positionMenu() {
+    const rect = btn.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    let left = rect.left, top = rect.bottom + 6;
+    if (top + menuRect.height > window.innerHeight - 8) top = rect.top - menuRect.height - 6;
+    if (left + menuRect.width > window.innerWidth - 8) left = window.innerWidth - menuRect.width - 8;
+    if (left < 8) left = 8;
+    menu.style.position = 'fixed';
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  }
+  function open() { renderGrid(); positionMenu(); menu.classList.add('open'); }
   function close() { menu.classList.remove('open'); }
 
   actionable(btn, () => {
     if (menu.classList.contains('open')) { close(); activePopoverClose = null; }
     else { openExclusive(close, open); }
   });
-  wrap.querySelectorAll('.dp-nav').forEach(nb => actionable(nb, () => { viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); }));
+  wrap.querySelectorAll('.dp-nav').forEach(nb => actionable(nb, () => { viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); positionMenu(); }));
   actionable(wrap.querySelector('.dp-clear'), () => { selected = null; labelEl.textContent = labelText(); onChange(null); close(); });
   actionable(wrap.querySelector('.dp-today-btn'), () => { selected = todayISO(); viewMonth = new Date(); labelEl.textContent = labelText(); onChange(selected); close(); });
   document.addEventListener('click', close);
