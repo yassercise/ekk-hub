@@ -411,9 +411,25 @@ function buildKebabMenu(container, actions) {
     dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); list[i].onClick(); }));
   }
   renderActions(actions);
-  btn.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('open'); });
+  btn.addEventListener('click', (e) => { e.stopPropagation(); dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = ''; dd.classList.toggle('open'); });
   document.addEventListener('click', () => dd.classList.remove('open'));
-  return { close: () => dd.classList.remove('open'), setActions: renderActions, dd, open: () => dd.classList.add('open') };
+  return {
+    close: () => dd.classList.remove('open'),
+    setActions: renderActions,
+    dd,
+    open: () => { dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = ''; dd.classList.add('open'); },
+    openAt: (x, y) => {
+      dd.style.position = 'fixed';
+      dd.style.right = 'auto';
+      const rect = dd.getBoundingClientRect();
+      let left = x, top = y;
+      if (left + rect.width > window.innerWidth - 8) left = window.innerWidth - rect.width - 8;
+      if (top + rect.height > window.innerHeight - 8) top = window.innerHeight - rect.height - 8;
+      dd.style.left = left + 'px';
+      dd.style.top = top + 'px';
+      dd.classList.add('open');
+    }
+  };
 }
 
 function makeInlineEditable(el, getValue, onSave) {
@@ -647,7 +663,7 @@ function renderTodoRows(container, items, showTag, editable) {
       makeInlineEditable(row.querySelector('.todo-title'), () => itemText(item), (val) => { setItemText(item, val); });
       const kebab = buildKebabMenu(row, []);
       kebab.setActions(baseKebabActionsFor(item, kebab));
-      row.addEventListener('contextmenu', (e) => { e.preventDefault(); kebab.open(); });
+      row.addEventListener('contextmenu', (e) => { e.preventDefault(); kebab.openAt(e.clientX, e.clientY); });
     }
     container.appendChild(row);
   });
