@@ -822,7 +822,7 @@ function renderDailyTodoDay() {
     const { active, done } = itemsForDate(dISO);
     const tab = document.createElement('button');
     tab.className = 'day-tab' + (dISO === state.selectedDate ? ' active' : '') + (dISO === todayISO() ? ' today-marker' : '');
-    tab.innerHTML = `<div class="dname">${dayNames[i]}</div><div class="dnum">${parseISO(dISO).getDate()}</div><div class="dcount">${active.length ? active.length + ' open' : '—'}</div><div class="ddone">${done.length ? '✓ ' + done.length : ''}</div>`;
+    tab.innerHTML = `<div class="dname">${dayNames[i]}</div><div class="dnum">${parseISO(dISO).getDate()}</div><div class="dcount">${active.length ? active.length + ' open' : '—'}</div><div class="ddone">${done.length || ''}</div>`;
     tab.addEventListener('click', () => { state.selectedDate = dISO; navigate('todo'); });
     weekDays.appendChild(tab);
   }
