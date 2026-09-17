@@ -353,6 +353,13 @@ function statusBreakdownHTML(sb) {
 }
 function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
 
+let activePopoverClose = null;
+function openExclusive(closeFn, openFn) {
+  if (activePopoverClose && activePopoverClose !== closeFn) activePopoverClose();
+  activePopoverClose = closeFn;
+  openFn();
+}
+
 function createDatePicker(container, initialISO, onChange) {
   const wrap = document.createElement('div');
   wrap.className = 'date-picker';
@@ -395,7 +402,11 @@ function createDatePicker(container, initialISO, onChange) {
   function open() { menu.classList.add('open'); renderGrid(); }
   function close() { menu.classList.remove('open'); }
 
-  btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.contains('open') ? close() : open(); });
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menu.classList.contains('open')) { close(); activePopoverClose = null; }
+    else { openExclusive(close, open); }
+  });
   wrap.querySelectorAll('.dp-nav').forEach(nb => nb.addEventListener('click', (e) => { e.stopPropagation(); viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); }));
   wrap.querySelector('.dp-clear').addEventListener('click', (e) => { e.stopPropagation(); selected = null; labelEl.textContent = labelText(); onChange(null); close(); });
   wrap.querySelector('.dp-today-btn').addEventListener('click', (e) => { e.stopPropagation(); selected = todayISO(); viewMonth = new Date(); labelEl.textContent = labelText(); onChange(selected); close(); });
@@ -416,7 +427,12 @@ function buildKebabMenu(container, actions) {
     dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); list[i].onClick(); }));
   }
   renderActions(actions);
-  btn.addEventListener('click', (e) => { e.stopPropagation(); dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = ''; dd.classList.toggle('open'); });
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dd.style.position = ''; dd.style.left = ''; dd.style.top = ''; dd.style.right = '';
+    if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
+    else { openExclusive(() => dd.classList.remove('open'), () => dd.classList.add('open')); }
+  });
   document.addEventListener('click', () => dd.classList.remove('open'));
   return {
     close: () => dd.classList.remove('open'),
@@ -498,7 +514,11 @@ function renderAddProjectForm(container, brandKeyFixed) {
 
   if (!brandKeyFixed) {
     const btn = wrap.querySelector('#brandPickerBtn'), menu = wrap.querySelector('#brandPickerMenu');
-    btn.addEventListener('click', (e) => { e.stopPropagation(); btn.classList.toggle('open'); menu.classList.toggle('open'); });
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (menu.classList.contains('open')) { btn.classList.remove('open'); menu.classList.remove('open'); activePopoverClose = null; }
+      else { openExclusive(() => { btn.classList.remove('open'); menu.classList.remove('open'); }, () => { btn.classList.add('open'); menu.classList.add('open'); }); }
+    });
     wrap.querySelectorAll('.custom-select-opt').forEach(opt => {
       opt.addEventListener('click', () => {
         selectedBrand = opt.dataset.b;
@@ -1086,6 +1106,62 @@ function renderGantt() {
   });
 }
 
+function renderAddTaskForm(container, projectId) {
+  const wrap = document.createElement('div');
+  wrap.className = 'add-project-form';
+  let selectedPriority = 'medium';
+  const priorityColors = { high: 'var(--behind-text)', medium: 'var(--risk-text)', low: 'var(--text-faint)' };
+  wrap.innerHTML = `
+    <input type="text" class="name-input" id="newTaskTitle" placeholder="Task title">
+    <input type="text" class="period-input" id="newTaskCat" placeholder="Category">
+    <input type="text" class="period-input" id="newTaskOwner" placeholder="Owner">
+    <div class="custom-select" id="priorityPicker">
+      <button type="button" class="custom-select-btn" id="priorityPickerBtn">
+        <span class="csb-dot" id="priorityPickerDot" style="background:${priorityColors.medium}"></span>
+        <span id="priorityPickerLabel">Medium</span>
+        <svg class="csb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="custom-select-menu" id="priorityPickerMenu">
+        <div class="custom-select-opt" data-p="high"><span class="csb-dot" style="background:${priorityColors.high}"></span>High</div>
+        <div class="custom-select-opt" data-p="medium"><span class="csb-dot" style="background:${priorityColors.medium}"></span>Medium</div>
+        <div class="custom-select-opt" data-p="low"><span class="csb-dot" style="background:${priorityColors.low}"></span>Low</div>
+      </div>
+    </div>
+    <div id="newTaskDueSlot"></div>
+    <button id="newTaskSubmit">Add task</button>`;
+  container.appendChild(wrap);
+
+  const duePicker = createDatePicker(document.getElementById('newTaskDueSlot'), null, () => {});
+
+  const pBtn = wrap.querySelector('#priorityPickerBtn'), pMenu = wrap.querySelector('#priorityPickerMenu');
+  pBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (pMenu.classList.contains('open')) { pBtn.classList.remove('open'); pMenu.classList.remove('open'); activePopoverClose = null; }
+    else { openExclusive(() => { pBtn.classList.remove('open'); pMenu.classList.remove('open'); }, () => { pBtn.classList.add('open'); pMenu.classList.add('open'); }); }
+  });
+  wrap.querySelectorAll('.custom-select-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      selectedPriority = opt.dataset.p;
+      wrap.querySelector('#priorityPickerLabel').textContent = selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1);
+      wrap.querySelector('#priorityPickerDot').style.background = priorityColors[selectedPriority];
+      pBtn.classList.remove('open'); pMenu.classList.remove('open');
+      clickTick();
+    });
+  });
+
+  wrap.querySelector('#newTaskSubmit').addEventListener('click', () => {
+    const title = wrap.querySelector('#newTaskTitle').value.trim();
+    const cat = wrap.querySelector('#newTaskCat').value.trim() || 'General';
+    const owner = wrap.querySelector('#newTaskOwner').value.trim() || '—';
+    const due = duePicker.getValue() || '';
+    if (!title) return;
+    brandData().tasks.push({ id: uid(), title, cat, owner, priority: selectedPriority, status: 'todo', due, notes: '', subtasks: [], deps: [], links: [], projectId });
+    Store.saveBrand(state.brand);
+    clickTick();
+    renderTaskTracker();
+  });
+}
+
 function renderTaskTracker() {
   const tabMount = document.getElementById('tabMount');
   const project = currentProject();
@@ -1093,6 +1169,7 @@ function renderTaskTracker() {
   const filtered = state.taskFilter === 'all' ? [...tasks].sort((a, b) => (a.status === 'done') - (b.status === 'done')) : tasks.filter(t => t.status === state.taskFilter);
 
   tabMount.innerHTML = `
+    <div class="card" style="margin-bottom:16px;"><div id="addTaskMount"></div></div>
     <div class="filter-tabs">
       <button class="filter-tab ${state.taskFilter === 'all' ? 'active' : ''}" data-f="all">All</button>
       <button class="filter-tab ${state.taskFilter === 'todo' ? 'active' : ''}" data-f="todo">To Do</button>
@@ -1100,6 +1177,7 @@ function renderTaskTracker() {
       <button class="filter-tab ${state.taskFilter === 'done' ? 'active' : ''}" data-f="done">Done</button>
     </div>
     <div class="task-list" id="taskList"></div>`;
+  renderAddTaskForm(document.getElementById('addTaskMount'), project ? project.id : null);
   tabMount.querySelectorAll('.filter-tab').forEach(f => f.addEventListener('click', () => { state.taskFilter = f.dataset.f; renderTaskTracker(); }));
 
   const list = document.getElementById('taskList');
