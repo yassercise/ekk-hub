@@ -648,6 +648,7 @@ function weeksInMonth(monthKey) {
   }
   return weeks;
 }
+function todoRowLabel(item) {
   if (item.kind === 'todo') {
     const projName = item.ref.projectId ? projectNameFor(item.ref.brand, item.ref.projectId) : null;
     return { title: item.ref.text, sub: projName };
