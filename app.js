@@ -363,19 +363,22 @@ function statusBreakdownHTML(sb) {
 function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
 
 let activePopoverClose = null;
+function pulse(el) { if (!el) return; el.classList.remove('pop-animate'); void el.offsetWidth; el.classList.add('pop-animate'); }
+function removeWithExit(el, callback) { if (!el) { callback(); return; } el.classList.add('row-exit'); setTimeout(callback, 250); }
+
 function openExclusive(closeFn, openFn) {
   if (activePopoverClose && activePopoverClose !== closeFn) activePopoverClose();
   activePopoverClose = closeFn;
   openFn();
 }
 
-function createDatePicker(container, initialISO, onChange) {
+function createDatePicker(container, initialISO, onChange, placeholder) {
   const wrap = document.createElement('div');
   wrap.className = 'date-picker';
   let selected = initialISO || null;
   let viewMonth = selected ? parseISO(selected) : new Date();
 
-  const labelText = () => selected ? fmtDateShort(selected) : 'Set date';
+  const labelText = () => selected ? fmtDateShort(selected) : (placeholder || 'Set date');
 
   wrap.innerHTML = `
     <div class="date-picker-btn" role="button" tabindex="0">
@@ -751,17 +754,18 @@ function renderTodoRows(container, items, showTag, editable) {
     const meta = item.brand ? BRAND_META[item.brand] : null;
     const row = document.createElement('div');
     row.className = 'todo-row';
+    row.dataset.itemId = item.ref.id;
     row.innerHTML = `
       <div class="check"></div>
       <div style="flex:1; min-width:0;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
       ${item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
       ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
-    row.querySelector('.check').addEventListener('click', () => { toggleItem(item); navigate('todo'); });
+    row.querySelector('.check').addEventListener('click', (e) => { toggleItem(item); pulse(e.currentTarget); setTimeout(() => navigate('todo'), 220); });
 
     if (editable) {
       makeInlineEditable(row.querySelector('.todo-title'), () => itemText(item), (val) => { setItemText(item, val); });
       const kebab = buildKebabMenu(row, []);
-      kebab.setActions(baseKebabActionsFor(item, kebab));
+      kebab.setActions(baseKebabActionsFor(item, kebab, row));
       row.addEventListener('contextmenu', (e) => { e.preventDefault(); kebab.openAt(e.clientX, e.clientY); });
     }
     container.appendChild(row);
@@ -792,7 +796,7 @@ function openProjectAssignMenu(kebab, item) {
     : [{ label: 'No projects yet', onClick: () => {} }];
   kebab.setActions([{ label: '← Back', back: true, onClick: () => kebab.setActions(baseKebabActionsFor(item, kebab)) }, ...list]);
 }
-function baseKebabActionsFor(item, kebab) {
+function baseKebabActionsFor(item, kebab, row) {
   const actions = [
     { label: 'Due today', onClick: () => { setItemDate(item, todayISO()); clickTick(); navigate('todo'); } },
     { label: 'Due tomorrow', onClick: () => { setItemDate(item, fmt(addDays(todayISO(), 1))); clickTick(); navigate('todo'); } },
@@ -803,7 +807,7 @@ function baseKebabActionsFor(item, kebab) {
     actions.push({ label: item.ref.brand ? 'Change brand…' : 'Set brand…', onClick: () => openBrandAssignMenu(kebab, item) });
     actions.push({ label: 'Assign to project…', onClick: () => openProjectAssignMenu(kebab, item) });
   }
-  actions.push({ label: 'Delete', danger: true, onClick: () => deleteTodoItem(item) });
+  actions.push({ label: 'Delete', danger: true, onClick: () => removeWithExit(row, () => deleteTodoItem(item)) });
   return actions;
 }
 
@@ -938,7 +942,7 @@ function renderDailyTodoDay() {
       const row = document.createElement('div');
       row.className = 'todo-row is-done';
       row.innerHTML = `<div class="check checked">✓</div><div style="flex:1;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>${meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
-      row.querySelector('.check').addEventListener('click', () => { toggleItem(item); navigate('todo'); });
+      row.querySelector('.check').addEventListener('click', (e) => { toggleItem(item); pulse(e.currentTarget); setTimeout(() => navigate('todo'), 220); });
       doneContainer.appendChild(row);
     });
   }
@@ -952,6 +956,7 @@ function renderDailyTodoDay() {
       const item = { kind: 'todo', ref: t, brand: t.brand || null };
       const row = document.createElement('div');
       row.className = 'todo-row';
+    row.dataset.itemId = item.ref.id;
       row.innerHTML = `
         <div class="check"></div>
         <div class="todo-title" style="flex:1; min-width:0;"></div>
@@ -961,7 +966,7 @@ function renderDailyTodoDay() {
           <div class="qd-pick-slot"></div>
         </div>
         <button class="icon-btn" title="Delete">×</button>`;
-      row.querySelector('.check').addEventListener('click', () => { toggleItem(item); navigate('todo'); });
+      row.querySelector('.check').addEventListener('click', (e) => { toggleItem(item); pulse(e.currentTarget); setTimeout(() => navigate('todo'), 220); });
       row.querySelector('.todo-title').textContent = t.text;
       makeInlineEditable(row.querySelector('.todo-title'), () => t.text, (val) => { t.text = val; Store.saveTodos(); });
       row.querySelector('[data-a="today"]').addEventListener('click', () => { t.date = todayISO(); Store.saveTodos(); clickTick(); navigate('todo'); });
@@ -978,10 +983,13 @@ function addTodoFromInput(inputId, dateOrNull) {
   const text = input.value.trim();
   if (!text) return;
   DATA.todos = DATA.todos || [];
-  DATA.todos.push({ id: uid(), text, date: dateOrNull, done: false, completedAt: null, brand: null });
+  const newId = uid();
+  DATA.todos.push({ id: newId, text, date: dateOrNull, done: false, completedAt: null, brand: null });
   Store.saveTodos();
   clickTick();
   navigate('todo');
+  const newRow = document.querySelector(`[data-item-id="${newId}"]`);
+  if (newRow) newRow.classList.add('row-enter');
 }
 
 /* ============================================================
@@ -1131,8 +1139,8 @@ function renderGantt() {
     </div>
     <div class="card-sub" style="margin-top:10px; padding-left:4px;">Shaded area = time already elapsed · red line = today · hover a bar for its exact date · hover a row to delete it</div>`;
 
-  const tlStartPicker = createDatePicker(document.getElementById('tlStartSlot'), null, () => {});
-  const tlEndPicker = createDatePicker(document.getElementById('tlEndSlot'), null, () => {});
+  const tlStartPicker = createDatePicker(document.getElementById('tlStartSlot'), null, () => {}, 'Start date');
+  const tlEndPicker = createDatePicker(document.getElementById('tlEndSlot'), null, () => {}, 'End date');
 
   tabMount.querySelector('#tlAddBtn').addEventListener('click', () => {
     const name = document.getElementById('tlName').value.trim();
@@ -1151,9 +1159,11 @@ function renderGantt() {
   tabMount.querySelectorAll('.gantt-delete-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      brandData().timeline.splice(parseInt(btn.dataset.idx, 10), 1);
-      Store.saveBrand(state.brand);
-      renderGantt();
+      removeWithExit(btn.closest('.gantt-row'), () => {
+        brandData().timeline.splice(parseInt(btn.dataset.idx, 10), 1);
+        Store.saveBrand(state.brand);
+        renderGantt();
+      });
     });
   });
 }
@@ -1232,10 +1242,13 @@ function renderAddTaskForm(container, projectId) {
     const owner = wrap.querySelector('#newTaskOwner').value.trim() || '—';
     const due = duePicker.getValue() || '';
     if (!title) return;
-    brandData().tasks.push({ id: uid(), title, cat, owner, priority: selectedPriority, status: 'todo', due, notes: '', subtasks: [], deps: [], links: [], projectId });
+    const newId = uid();
+    brandData().tasks.push({ id: newId, title, cat, owner, priority: selectedPriority, status: 'todo', due, notes: '', subtasks: [], deps: [], links: [], projectId });
     Store.saveBrand(state.brand);
     clickTick();
     renderTaskTracker();
+    const newRow = document.querySelector(`[data-task="${newId}"]`)?.closest('.task-item');
+    if (newRow) newRow.classList.add('row-enter');
   });
 }
 
@@ -1298,7 +1311,7 @@ function renderTaskTracker() {
     mountPriorityPicker(item.querySelector('.task-priority-mount'), t, () => { Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
     createDatePicker(item.querySelector('.task-due-mount'), t.due || null, (iso) => { t.due = iso || ''; Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
     const taskKebab = buildKebabMenu(item.querySelector('.task-row-kebab-mount'), [
-      { label: 'Delete task', danger: true, onClick: () => { const idx = brandData().tasks.indexOf(t); brandData().tasks.splice(idx, 1); Store.saveBrand(state.brand); renderTaskTracker(); } }
+      { label: 'Delete task', danger: true, onClick: () => { removeWithExit(item, () => { const idx = brandData().tasks.indexOf(t); brandData().tasks.splice(idx, 1); Store.saveBrand(state.brand); renderTaskTracker(); }); } }
     ]);
     item.querySelector('.task-row').addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -1314,6 +1327,7 @@ function renderTaskTracker() {
       setUnitDone({ kind: 'task', ref: t }, state.brand, !wasDone, todayISO());
       if (wasDone) { recomputeTaskStatus(t); Store.saveBrand(state.brand); }
       wasDone ? uncheckTick() : completeChime();
+      pulse(e.currentTarget);
       item.classList.add('completing');
       setTimeout(() => renderTaskTracker(), 340);
     });
@@ -1340,7 +1354,7 @@ function renderTaskTracker() {
         const subKebabMount = document.createElement('div');
         row.appendChild(subKebabMount);
         const subKebab = buildKebabMenu(subKebabMount, [
-          { label: 'Delete subtask', danger: true, onClick: () => { t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); } }
+          { label: 'Delete subtask', danger: true, onClick: () => { removeWithExit(row, () => { t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); }); } }
         ]);
         subKebabMount.querySelector('.kebab-btn').style.display = 'none';
         row.addEventListener('contextmenu', (e) => {
@@ -1354,11 +1368,12 @@ function renderTaskTracker() {
           recomputeTaskStatus(t);
           Store.saveBrand(state.brand);
           nowDone ? completeChime() : uncheckTick();
-          renderTaskTracker();
+          pulse(e.currentTarget);
+          setTimeout(() => renderTaskTracker(), 240);
         });
         row.querySelector('.subtask-text-input').addEventListener('change', (e) => { s.text = e.target.value.trim() || s.text; Store.saveBrand(state.brand); });
         row.querySelector('.subtask-notes-input').addEventListener('change', (e) => { s.notes = e.target.value; Store.saveBrand(state.brand); });
-        row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); });
+        row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); removeWithExit(row, () => { t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); }); });
       });
       item.querySelector('.addSubBtn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1370,6 +1385,8 @@ function renderTaskTracker() {
         Store.saveBrand(state.brand);
         clickTick();
         renderTaskTracker();
+        const subList = document.getElementById(`subtasks-${t.id}`);
+        if (subList && subList.lastElementChild) subList.lastElementChild.classList.add('row-enter');
       });
     }
   });
@@ -1404,6 +1421,7 @@ function renderProjectFiles() {
     project.files.forEach(f => {
       const row = document.createElement('div');
       row.className = 'todo-row';
+    row.dataset.itemId = item.ref.id;
       row.innerHTML = `<a href="${f.url}" target="_blank" rel="noopener" class="file-link">📎 ${f.label}</a><button class="file-remove-btn" data-id="${f.id}">×</button>`;
       row.querySelector('.file-remove-btn').addEventListener('click', () => { project.files = project.files.filter(x => x.id !== f.id); Store.saveBrand(state.brand); renderProjectFiles(); });
       list.appendChild(row);
