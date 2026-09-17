@@ -85,7 +85,7 @@ let DATA = null;
    STATE + DATE HELPERS
    ============================================================ */
 
-const state = { brand: 'kdr', view: 'global-overview', projectId: null, projectTab: 'timeline', taskFilter: 'all', expandedTask: null, selectedDate: null };
+const state = { brand: 'kdr', view: 'global-overview', projectId: null, projectTab: 'timeline', taskFilter: 'all', expandedTask: null, selectedDate: null, todoMode: 'day', expandedMonth: null };
 
 function fmt(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function todayISO() { return fmt(new Date()); }
@@ -252,14 +252,15 @@ function itemsForDate(dateISO) {
 function unscheduledTodos() { return (DATA.todos || []).filter(t => !t.date && !t.done); }
 
 function toggleItem(item) {
+  const ctxDate = state.selectedDate || todayISO();
   if (item.kind === 'todo') {
     item.ref.done = !item.ref.done;
-    item.ref.completedAt = item.ref.done ? todayISO() : null;
+    item.ref.completedAt = item.ref.done ? ctxDate : null;
     Store.saveTodos();
     item.ref.done ? completeChime() : uncheckTick();
   } else {
     const nowDone = !unitDone(item);
-    setUnitDone(item, item.brand, nowDone, todayISO());
+    setUnitDone(item, item.brand, nowDone, ctxDate);
     nowDone ? completeChime() : uncheckTick();
   }
 }
@@ -624,7 +625,29 @@ function renderBrandOverview() {
    VIEW: DAILY TO-DO
    ============================================================ */
 
-function todoRowLabel(item) {
+function monthsWithActivity() {
+  const months = new Set();
+  const now = new Date();
+  months.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  (DATA.todos || []).forEach(t => { if (t.completedAt) months.add(t.completedAt.slice(0, 7)); });
+  BRAND_KEYS.forEach(b => dueUnitsForBrand(b).forEach(u => { const c = unitCompletedAt(u); if (c) months.add(c.slice(0, 7)); }));
+  return Array.from(months).sort().reverse();
+}
+function weeksInMonth(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const firstDay = new Date(y, m - 1, 1);
+  const lastDay = new Date(y, m, 0);
+  let cursorDate = new Date(firstDay);
+  while (cursorDate.getDay() !== 0) cursorDate = addDays(cursorDate, 1);
+  const weeks = [];
+  while (cursorDate <= lastDay) {
+    let endDate = addDays(cursorDate, 4);
+    if (endDate > lastDay) endDate = lastDay;
+    weeks.push({ startISO: fmt(cursorDate), endISO: fmt(endDate) });
+    cursorDate = addDays(cursorDate, 7);
+  }
+  return weeks;
+}
   if (item.kind === 'todo') {
     const projName = item.ref.projectId ? projectNameFor(item.ref.brand, item.ref.projectId) : null;
     return { title: item.ref.text, sub: projName };
@@ -708,13 +731,62 @@ function deleteTodoItem(item) {
 
 function renderDailyTodo() {
   if (!state.selectedDate) state.selectedDate = todayISO();
+  const mount = document.getElementById('viewMount');
+  mount.innerHTML = `
+    <div class="todo-mode-tabs">
+      <button class="todo-mode-tab ${state.todoMode === 'day' ? 'active' : ''}" data-m="day">Day</button>
+      <button class="todo-mode-tab ${state.todoMode === 'summary' ? 'active' : ''}" data-m="summary">Summary</button>
+    </div>
+    <div id="todoModeMount"></div>`;
+  mount.querySelectorAll('.todo-mode-tab').forEach(t => t.addEventListener('click', () => { state.todoMode = t.dataset.m; renderDailyTodo(); }));
+
+  if (state.todoMode === 'summary') { renderTodoSummary(); return; }
+  renderDailyTodoDay();
+}
+
+function renderTodoSummary() {
+  const mount = document.getElementById('todoModeMount');
+  const months = monthsWithActivity();
+  mount.innerHTML = `<div class="card"><div id="monthList"></div></div>`;
+  const list = document.getElementById('monthList');
+  months.forEach(monthKey => {
+    const [y, m] = monthKey.split('-').map(Number);
+    const monthName = new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const monthStart = `${monthKey}-01`;
+    const monthEnd = fmt(new Date(y, m, 0));
+    const total = completedCountInRange(monthStart, monthEnd);
+    const isOpen = state.expandedMonth === monthKey;
+
+    const row = document.createElement('div');
+    row.className = 'month-row';
+    row.innerHTML = `<div class="m-name">${monthName}</div><div class="m-count">${total} completed</div>`;
+    row.addEventListener('click', () => { state.expandedMonth = isOpen ? null : monthKey; renderTodoSummary(); });
+    list.appendChild(row);
+
+    const weeksWrap = document.createElement('div');
+    weeksWrap.className = 'month-weeks' + (isOpen ? ' open' : '');
+    if (isOpen) {
+      weeksInMonth(monthKey).forEach(w => {
+        const count = completedCountInRange(w.startISO, w.endISO);
+        const wRow = document.createElement('div');
+        wRow.className = 'week-row';
+        wRow.innerHTML = `<div class="w-range">${fmtDateShort(w.startISO)} – ${fmtDateShort(w.endISO)}</div><div class="w-count">${count} completed</div>`;
+        wRow.addEventListener('click', (e) => { e.stopPropagation(); state.selectedDate = w.startISO; state.todoMode = 'day'; navigate('todo'); });
+        weeksWrap.appendChild(wRow);
+      });
+    }
+    list.appendChild(weeksWrap);
+  });
+}
+
+function renderDailyTodoDay() {
+  const mount = document.getElementById('todoModeMount');
   const weekStart = weekStartOf(state.selectedDate);
   const weekEnd = fmt(addDays(weekStart, 4));
   const monthStart = state.selectedDate.slice(0, 7) + '-01';
   const now = parseISO(state.selectedDate);
   const monthEnd = fmt(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const mount = document.getElementById('viewMount');
   mount.innerHTML = `
     <div class="card week-strip-card">
       <button class="week-nav-btn" id="weekPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -746,10 +818,10 @@ function renderDailyTodo() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
   for (let i = 0; i < 5; i++) {
     const dISO = fmt(addDays(weekStart, i));
-    const { active } = itemsForDate(dISO);
+    const { active, done } = itemsForDate(dISO);
     const tab = document.createElement('button');
     tab.className = 'day-tab' + (dISO === state.selectedDate ? ' active' : '') + (dISO === todayISO() ? ' today-marker' : '');
-    tab.innerHTML = `<div class="dname">${dayNames[i]}</div><div class="dnum">${parseISO(dISO).getDate()}</div><div class="dcount">${active.length ? active.length + ' open' : '—'}</div>`;
+    tab.innerHTML = `<div class="dname">${dayNames[i]}</div><div class="dnum">${parseISO(dISO).getDate()}</div><div class="dcount">${active.length ? active.length + ' open' : '—'}</div><div class="ddone">${done.length ? '✓ ' + done.length : ''}</div>`;
     tab.addEventListener('click', () => { state.selectedDate = dISO; navigate('todo'); });
     weekDays.appendChild(tab);
   }
@@ -758,7 +830,7 @@ function renderDailyTodo() {
   document.getElementById('jumpToday').addEventListener('click', () => { state.selectedDate = todayISO(); navigate('todo'); });
 
   fillStatCards(document.getElementById('counters'), [
-    { label: 'Completed today', value: completedCountInRange(todayISO(), todayISO()) },
+    { label: state.selectedDate === todayISO() ? 'Completed today' : 'Completed this day', value: completedCountInRange(state.selectedDate, state.selectedDate) },
     { label: 'Completed this week', value: completedCountInRange(fmt(weekStart), weekEnd) },
     { label: 'Completed this month', value: completedCountInRange(monthStart, monthEnd) }
   ]);
