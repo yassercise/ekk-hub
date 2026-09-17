@@ -352,6 +352,106 @@ function statusBreakdownHTML(sb) {
 }
 function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
 
+function createDatePicker(container, initialISO, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'date-picker';
+  let selected = initialISO || null;
+  let viewMonth = selected ? parseISO(selected) : new Date();
+
+  const labelText = () => selected ? fmtDateShort(selected) : 'Set date';
+
+  wrap.innerHTML = `
+    <button type="button" class="date-picker-btn">
+      <svg class="dp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span class="dp-label">${labelText()}</span>
+    </button>
+    <div class="date-picker-menu">
+      <div class="dp-header"><button type="button" class="dp-nav" data-dir="-1">‹</button><div class="dp-month-label"></div><button type="button" class="dp-nav" data-dir="1">›</button></div>
+      <div class="dp-grid"></div>
+      <div class="dp-footer"><button type="button" class="dp-clear">Clear</button><button type="button" class="dp-today-btn">Today</button></div>
+    </div>`;
+  container.appendChild(wrap);
+
+  const btn = wrap.querySelector('.date-picker-btn'), menu = wrap.querySelector('.date-picker-menu'), grid = wrap.querySelector('.dp-grid'), monthLabel = wrap.querySelector('.dp-month-label'), labelEl = wrap.querySelector('.dp-label');
+
+  function renderGrid() {
+    monthLabel.textContent = viewMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    grid.innerHTML = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { const el = document.createElement('div'); el.className = 'dp-dow'; el.textContent = d; grid.appendChild(el); });
+    const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+    const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < first.getDay(); i++) grid.appendChild(document.createElement('div'));
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = fmt(new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d));
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'dp-day' + (iso === selected ? ' selected' : '') + (iso === todayISO() ? ' is-today' : '');
+      cell.textContent = d;
+      cell.addEventListener('click', (e) => { e.stopPropagation(); selected = iso; labelEl.textContent = labelText(); onChange(selected); close(); });
+      grid.appendChild(cell);
+    }
+  }
+  function open() { menu.classList.add('open'); renderGrid(); }
+  function close() { menu.classList.remove('open'); }
+
+  btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.contains('open') ? close() : open(); });
+  wrap.querySelectorAll('.dp-nav').forEach(nb => nb.addEventListener('click', (e) => { e.stopPropagation(); viewMonth.setMonth(viewMonth.getMonth() + parseInt(nb.dataset.dir, 10)); renderGrid(); }));
+  wrap.querySelector('.dp-clear').addEventListener('click', (e) => { e.stopPropagation(); selected = null; labelEl.textContent = labelText(); onChange(null); close(); });
+  wrap.querySelector('.dp-today-btn').addEventListener('click', (e) => { e.stopPropagation(); selected = todayISO(); viewMonth = new Date(); labelEl.textContent = labelText(); onChange(selected); close(); });
+  document.addEventListener('click', close);
+
+  return { getValue: () => selected };
+}
+
+function buildKebabMenu(container, actions) {
+  const wrap = document.createElement('div');
+  wrap.className = 'kebab-menu';
+  wrap.innerHTML = `<button type="button" class="kebab-btn">⋯</button><div class="kebab-dropdown"></div>`;
+  container.appendChild(wrap);
+  const btn = wrap.querySelector('.kebab-btn'), dd = wrap.querySelector('.kebab-dropdown');
+
+  function renderActions(list) {
+    dd.innerHTML = list.map((a, i) => `<button type="button" class="kebab-item ${a.danger ? 'danger' : ''} ${a.back ? 'back' : ''}" data-i="${i}">${a.label}</button>`).join('');
+    dd.querySelectorAll('.kebab-item').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); list[i].onClick(); }));
+  }
+  renderActions(actions);
+  btn.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('open'); });
+  document.addEventListener('click', () => dd.classList.remove('open'));
+  return { close: () => dd.classList.remove('open'), setActions: renderActions };
+}
+
+function makeInlineEditable(el, getValue, onSave) {
+  el.classList.add('inline-editable');
+  el.title = 'Tap to edit';
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (el.querySelector('input')) return;
+    const current = getValue();
+    el.innerHTML = `<input type="text" class="inline-edit-input" value="${current.replace(/"/g, '&quot;')}">`;
+    const input = el.querySelector('input');
+    input.focus(); input.select();
+    let done = false;
+    const finish = (save) => {
+      if (done) return; done = true;
+      const val = input.value.trim();
+      if (save && val && val !== current) onSave(val);
+      el.textContent = (save && val) ? val : current;
+    };
+    input.addEventListener('click', (ev) => ev.stopPropagation());
+    input.addEventListener('blur', () => finish(true));
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+      if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+    });
+  });
+}
+
+function allProjectsFlat() {
+  const out = [];
+  BRAND_KEYS.forEach(b => DATA[b].projects.forEach(p => out.push({ brandKey: b, project: p })));
+  return out;
+}
+
 function renderAddProjectForm(container, brandKeyFixed) {
   const wrap = document.createElement('div');
   wrap.className = 'add-project-form';
@@ -370,10 +470,12 @@ function renderAddProjectForm(container, brandKeyFixed) {
   wrap.innerHTML = `
     ${brandPickerHTML}
     <input type="text" class="name-input" id="newProjName" placeholder="Project name">
-    <input type="date" class="period-input" id="newProjStart" title="Start date">
-    <input type="date" class="period-input" id="newProjEnd" title="End date">
+    <div class="dp-slot" id="newProjStartSlot"></div>
+    <div class="dp-slot" id="newProjEndSlot"></div>
     <button id="newProjSubmit">Add project</button>`;
   container.appendChild(wrap);
+  const startPicker = createDatePicker(wrap.querySelector('#newProjStartSlot'), todayISO(), () => {});
+  const endPicker = createDatePicker(wrap.querySelector('#newProjEndSlot'), fmt(addDays(todayISO(), 90)), () => {});
 
   if (!brandKeyFixed) {
     const btn = wrap.querySelector('#brandPickerBtn'), menu = wrap.querySelector('#brandPickerMenu');
@@ -392,8 +494,8 @@ function renderAddProjectForm(container, brandKeyFixed) {
   wrap.querySelector('#newProjSubmit').addEventListener('click', () => {
     const brandKey = brandKeyFixed || selectedBrand;
     const name = wrap.querySelector('#newProjName').value.trim();
-    const startDate = wrap.querySelector('#newProjStart').value || todayISO();
-    const endDate = wrap.querySelector('#newProjEnd').value || fmt(addDays(startDate, 90));
+    const startDate = startPicker.getValue() || todayISO();
+    const endDate = endPicker.getValue() || fmt(addDays(startDate, 90));
     if (!name) return;
     DATA[brandKey].projects.push({ id: uid(), name, startDate, endDate, type: 'Project', status: 'active', files: [] });
     Store.saveBrand(brandKey);
@@ -509,10 +611,23 @@ function renderBrandOverview() {
    ============================================================ */
 
 function todoRowLabel(item) {
-  if (item.kind === 'todo') return { title: item.ref.text, sub: null };
+  if (item.kind === 'todo') {
+    const projName = item.ref.projectId ? projectNameFor(item.ref.brand, item.ref.projectId) : null;
+    return { title: item.ref.text, sub: projName };
+  }
   const projName = projectNameFor(item.brand, unitProjectId(item));
   if (item.kind === 'subtask') return { title: item.ref.text, sub: `${item.parentTask.title}${projName ? ' · ' + projName : ''}` };
   return { title: item.ref.title, sub: projName };
+}
+
+function itemText(item) { return item.kind === 'todo' ? item.ref.text : item.ref.text; }
+function setItemText(item, val) {
+  if (item.kind === 'todo') { item.ref.text = val; Store.saveTodos(); }
+  else { item.ref.text = val; Store.saveBrand(item.brand); }
+}
+function setItemDate(item, iso) {
+  if (item.kind === 'todo') { item.ref.date = iso; Store.saveTodos(); }
+  else { item.ref.due = iso || ''; Store.saveBrand(item.brand); }
 }
 
 function renderTodoRows(container, items, showTag, editable) {
@@ -525,47 +640,40 @@ function renderTodoRows(container, items, showTag, editable) {
     row.className = 'todo-row';
     row.innerHTML = `
       <div class="check"></div>
-      <div style="flex:1;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
+      <div style="flex:1; min-width:0;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
       ${item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
-      ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}
-      ${editable ? `<div class="todo-row-actions"><button class="icon-btn edit-btn" title="Edit">✎</button><button class="icon-btn" title="Delete">×</button></div>` : ''}`;
+      ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
     row.querySelector('.check').addEventListener('click', () => { toggleItem(item); navigate('todo'); });
+
     if (editable) {
-      row.querySelector('.edit-btn').addEventListener('click', () => openTodoEdit(row, item));
-      row.querySelectorAll('.icon-btn')[1].addEventListener('click', () => deleteTodoItem(item));
+      makeInlineEditable(row.querySelector('.todo-title'), () => itemText(item), (val) => { setItemText(item, val); });
+      const kebab = buildKebabMenu(row, []);
+      kebab.setActions(baseKebabActionsFor(item, kebab));
     }
     container.appendChild(row);
   });
 }
 
-function openTodoEdit(row, item) {
+function openProjectAssignMenu(kebab, item) {
+  const projects = allProjectsFlat();
+  const list = projects.length
+    ? projects.map((pr, i) => ({ label: `${pr.brandKey.toUpperCase()} · ${pr.project.name}`, onClick: () => {
+        item.ref.brand = pr.brandKey; item.ref.projectId = pr.project.id; Store.saveTodos(); clickTick(); navigate('todo');
+      }}))
+    : [{ label: 'No projects yet', onClick: () => {} }];
+  kebab.setActions([{ label: '← Back', back: true, onClick: () => kebab.setActions(baseKebabActionsFor(item, kebab)) }, ...list]);
+}
+function baseKebabActionsFor(item, kebab) {
+  const actions = [
+    { label: 'Due today', onClick: () => { setItemDate(item, todayISO()); clickTick(); navigate('todo'); } },
+    { label: 'Due tomorrow', onClick: () => { setItemDate(item, fmt(addDays(todayISO(), 1))); clickTick(); navigate('todo'); } },
+  ];
   if (item.kind === 'todo') {
-    row.outerHTML = `<div class="todo-edit-form">
-      <input type="text" class="edit-text" value="${item.ref.text.replace(/"/g, '&quot;')}">
-      <input type="date" class="edit-date" value="${item.ref.date || ''}">
-      <button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>
-    </div>`;
-  } else {
-    row.outerHTML = `<div class="todo-edit-form">
-      <div style="flex:1; font-size:13px; font-weight:600;">${todoRowLabel(item).title}</div>
-      <input type="date" class="edit-date" value="${item.ref.due || ''}">
-      <button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>
-    </div>`;
+    actions.push({ label: 'Remove date (unschedule)', onClick: () => { setItemDate(item, null); clickTick(); navigate('todo'); } });
+    actions.push({ label: 'Assign to project…', onClick: () => openProjectAssignMenu(kebab, item) });
   }
-  const form = document.querySelector('.todo-edit-form');
-  form.querySelector('.cancel-btn').addEventListener('click', () => navigate('todo'));
-  form.querySelector('.save-btn').addEventListener('click', () => {
-    if (item.kind === 'todo') {
-      item.ref.text = form.querySelector('.edit-text').value.trim() || item.ref.text;
-      item.ref.date = form.querySelector('.edit-date').value || null;
-      Store.saveTodos();
-    } else {
-      item.ref.due = form.querySelector('.edit-date').value || '';
-      Store.saveBrand(item.brand);
-    }
-    clickTick();
-    navigate('todo');
-  });
+  actions.push({ label: 'Delete', danger: true, onClick: () => deleteTodoItem(item) });
+  return actions;
 }
 
 function deleteTodoItem(item) {
@@ -827,20 +935,23 @@ function renderGantt() {
         <input type="text" class="gi-name" id="tlName" placeholder="Item name">
         <input type="text" class="gi-cat" id="tlCat" placeholder="Category">
         <input type="text" class="gi-owner" id="tlOwner" placeholder="Owner">
-        <input type="date" class="gi-date" id="tlStart">
-        <input type="date" class="gi-date" id="tlEnd">
+        <div id="tlStartSlot"></div>
+        <div id="tlEndSlot"></div>
         <button id="tlAddBtn">Add item</button>
       </div>
       ${buildBody()}
     </div>
     <div class="card-sub" style="margin-top:10px; padding-left:4px;">Shaded area = time already elapsed · red line = today · hover a bar for its exact date · hover a row to delete it</div>`;
 
+  const tlStartPicker = createDatePicker(document.getElementById('tlStartSlot'), null, () => {});
+  const tlEndPicker = createDatePicker(document.getElementById('tlEndSlot'), null, () => {});
+
   tabMount.querySelector('#tlAddBtn').addEventListener('click', () => {
     const name = document.getElementById('tlName').value.trim();
     const cat = document.getElementById('tlCat').value.trim();
     const owner = document.getElementById('tlOwner').value.trim() || '—';
-    const start = document.getElementById('tlStart').value;
-    const end = document.getElementById('tlEnd').value || start;
+    const start = tlStartPicker.getValue();
+    const end = tlEndPicker.getValue() || start;
     if (!name || !cat || !start) return;
     const out = []; let cur = parseISO(start); const endD = parseISO(end);
     while (cur <= endD) { out.push(fmt(cur)); cur = addDays(cur, 1); }
@@ -885,11 +996,12 @@ function renderTaskTracker() {
     item.innerHTML = `
       <div class="task-row">
         <div class="task-complete-btn ${isDone ? 'done' : ''}" data-task="${t.id}">${isDone ? '✓' : ''}</div>
-        <div class="task-title-cell"><div class="t-title">${t.title}</div><div class="t-cat">${t.cat} · ${t.owner}</div></div>
+        <div class="task-title-cell"><div class="t-title"></div><div class="t-cat">${t.cat} · ${t.owner}</div></div>
         <div><span class="priority-pill ${t.priority}">${t.priority}</span></div>
         <div><span class="status-pill ${t.status}">${t.status === 'todo' ? 'To Do' : t.status === 'progress' ? 'In Progress' : 'Done'}</span></div>
         <div class="task-due ${t.due && t.due < todayISO() && t.status !== 'done' ? 'overdue' : ''}">${t.due || '—'}</div>
         <div class="task-sub-count">${t.subtasks.length ? doneCount + '/' + t.subtasks.length : '—'}</div>
+        <div class="task-row-kebab-mount"></div>
       </div>
       <div class="task-detail ${isOpen ? 'open' : ''}" id="detail-${t.id}">
         <div class="task-detail-grid">
@@ -905,7 +1017,12 @@ function renderTaskTracker() {
           </div>
         </div>
       </div>`;
-    item.querySelector('.task-title-cell').addEventListener('click', () => { state.expandedTask = isOpen ? null : t.id; renderTaskTracker(); });
+    item.querySelector('.t-title').textContent = t.title;
+    makeInlineEditable(item.querySelector('.t-title'), () => t.title, (val) => { t.title = val; Store.saveBrand(state.brand); });
+    buildKebabMenu(item.querySelector('.task-row-kebab-mount'), [
+      { label: 'Delete task', danger: true, onClick: () => { const idx = brandData().tasks.indexOf(t); brandData().tasks.splice(idx, 1); Store.saveBrand(state.brand); renderTaskTracker(); } }
+    ]);
+    item.querySelector('.task-title-cell').addEventListener('click', (e) => { if (e.target.closest('.inline-edit-input')) return; state.expandedTask = isOpen ? null : t.id; renderTaskTracker(); });
     item.querySelector('.task-complete-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       setUnitDone({ kind: 'task', ref: t }, state.brand, t.status !== 'done', todayISO());
@@ -928,9 +1045,11 @@ function renderTaskTracker() {
             <button class="icon-btn" title="Delete subtask">×</button>
           </div>
           <div class="subtask-meta">
-            <input type="date" class="subtask-due-input" value="${s.due || ''}" title="Due date">
+            <div class="subtask-due-slot"></div>
             <input type="text" class="subtask-notes-input" value="${(s.notes || '').replace(/"/g, '&quot;')}" placeholder="Note…">
           </div>`;
+        sub.appendChild(row);
+        createDatePicker(row.querySelector('.subtask-due-slot'), s.due || null, (iso) => { s.due = iso || ''; Store.saveBrand(state.brand); clickTick(); });
         row.querySelector('.subtask-check').addEventListener('click', (e) => {
           e.stopPropagation();
           const nowDone = !s.done;
@@ -940,10 +1059,8 @@ function renderTaskTracker() {
           renderTaskTracker();
         });
         row.querySelector('.subtask-text-input').addEventListener('change', (e) => { s.text = e.target.value.trim() || s.text; Store.saveBrand(state.brand); });
-        row.querySelector('.subtask-due-input').addEventListener('change', (e) => { s.due = e.target.value; Store.saveBrand(state.brand); clickTick(); });
         row.querySelector('.subtask-notes-input').addEventListener('change', (e) => { s.notes = e.target.value; Store.saveBrand(state.brand); });
         row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); t.subtasks = t.subtasks.filter(x => x.id !== s.id); Store.saveBrand(state.brand); renderTaskTracker(); });
-        sub.appendChild(row);
       });
       item.querySelector('.addSubBtn').addEventListener('click', (e) => {
         e.stopPropagation();
