@@ -1350,8 +1350,11 @@ function renderTaskTracker() {
       t.subtasks.forEach(s => {
         const row = document.createElement('div');
         row.className = `subtask-row-full ${s.done ? 'done' : ''}`;
+        row.draggable = true;
+        row.dataset.subId = s.id;
         row.innerHTML = `
           <div class="subtask-main">
+            <div class="drag-handle" title="Drag to reorder">⠿</div>
             <div class="subtask-check" style="background:${s.done ? 'var(--accent)' : 'transparent'}; border-color:${s.done ? 'var(--accent)' : ''};">${s.done ? '✓' : ''}</div>
             <input type="text" class="subtask-text-input" value="${s.text.replace(/"/g, '&quot;')}">
             <button class="icon-btn" title="Delete subtask">×</button>
@@ -1385,6 +1388,29 @@ function renderTaskTracker() {
         row.querySelector('.subtask-text-input').addEventListener('change', (e) => { s.text = e.target.value.trim() || s.text; Store.saveBrand(state.brand); });
         row.querySelector('.subtask-notes-input').addEventListener('change', (e) => { s.notes = e.target.value; Store.saveBrand(state.brand); });
         row.querySelector('.icon-btn').addEventListener('click', (e) => { e.stopPropagation(); removeWithExit(row, () => { t.subtasks = t.subtasks.filter(x => x.id !== s.id); recomputeTaskStatus(t); Store.saveBrand(state.brand); renderTaskTracker(); }); });
+        row.addEventListener('dragstart', (e) => {
+          if (e.target.closest('input, .subtask-check, .icon-btn, .date-picker, .kebab-menu')) { e.preventDefault(); return; }
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', s.id);
+          setTimeout(() => row.classList.add('dragging'), 0);
+        });
+        row.addEventListener('dragend', () => row.classList.remove('dragging'));
+        row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          const draggedId = e.dataTransfer.getData('text/plain');
+          if (!draggedId || draggedId === s.id) return;
+          const fromIdx = t.subtasks.findIndex(x => x.id === draggedId);
+          const toIdx = t.subtasks.findIndex(x => x.id === s.id);
+          if (fromIdx === -1 || toIdx === -1) return;
+          const [moved] = t.subtasks.splice(fromIdx, 1);
+          t.subtasks.splice(toIdx, 0, moved);
+          Store.saveBrand(state.brand);
+          clickTick();
+          renderTaskTracker();
+        });
       });
       item.querySelector('.addSubBtn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1399,6 +1425,7 @@ function renderTaskTracker() {
         const subList = document.getElementById(`subtasks-${t.id}`);
         if (subList && subList.lastElementChild) subList.lastElementChild.classList.add('row-enter');
       });
+      document.getElementById(`newSub-${t.id}`).addEventListener('keydown', (e) => { if (e.key === 'Enter') item.querySelector('.addSubBtn').click(); });
     }
   });
 }

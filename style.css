@@ -634,3 +634,10 @@ button, input, select, textarea {
 .status-pill-btn.good { color: var(--good-text); border-color: rgba(22,168,99,0.25); background: var(--good-bg); }
 .status-pill-btn.risk { color: var(--risk-text); border-color: rgba(245,166,35,0.3); background: var(--risk-bg); }
 .status-pill-btn .csb-chev { width: 12px; height: 12px; margin-left: 2px; }
+
+/* ---------- Subtask drag-to-reorder ---------- */
+.drag-handle { cursor: grab; color: var(--text-faint); font-size: 14px; line-height: 1; flex-shrink: 0; padding: 0 2px; user-select: none; transition: color 200ms ease; }
+.drag-handle:hover { color: var(--text-dim); }
+.subtask-row-full { transition: opacity 200ms ease, transform 200ms ease, background 200ms ease; border-radius: 8px; }
+.subtask-row-full.dragging { opacity: 0.4; }
+.subtask-row-full.drag-over { background: var(--accent-soft); transform: translateY(2px); }
