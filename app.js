@@ -259,10 +259,16 @@ function itemsForDate(dateISO) {
   const isDone = (it) => it.kind === 'todo' ? it.ref.done : unitDone(it);
   const active = items.filter(it => !isDone(it));
   const done = items.filter(it => isDone(it));
-  active.sort((a, b) => (b.overdue ? 1 : 0) - (a.overdue ? 1 : 0));
+  active.sort((a, b) => {
+    const overdueDiff = (b.overdue ? 1 : 0) - (a.overdue ? 1 : 0);
+    if (overdueDiff !== 0) return overdueDiff;
+    const oa = a.ref.order !== undefined ? a.ref.order : Infinity;
+    const ob = b.ref.order !== undefined ? b.ref.order : Infinity;
+    return oa - ob;
+  });
   return { active, done };
 }
-function unscheduledTodos() { return (DATA.todos || []).filter(t => !t.date && !t.done); }
+function unscheduledTodos() { return (DATA.todos || []).filter(t => !t.date && !t.done).sort((a, b) => (a.order !== undefined ? a.order : Infinity) - (b.order !== undefined ? b.order : Infinity)); }
 
 function toggleItem(item) {
   const ctxDate = state.selectedDate || todayISO();
@@ -363,6 +369,23 @@ function statusBreakdownHTML(sb) {
 function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
 
 let activePopoverClose = null;
+function reorderItems(list, fromId, toId, getId) {
+  const fromIdx = list.findIndex(it => getId(it) === fromId);
+  const toIdx = list.findIndex(it => getId(it) === toId);
+  if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+  const [moved] = list.splice(fromIdx, 1);
+  list.splice(toIdx, 0, moved);
+  const touchedBrands = new Set();
+  list.forEach((it, idx) => {
+    const ref = it.ref !== undefined ? it.ref : it;
+    ref.order = idx;
+    if (it.kind === 'subtask') touchedBrands.add(it.brand);
+    else if (it.kind === 'todo') touchedBrands.add('__todos__');
+    else touchedBrands.add('__todos__');
+  });
+  touchedBrands.forEach(b => b === '__todos__' ? Store.saveTodos() : Store.saveBrand(b));
+}
+
 function pulse(el) { if (!el) return; el.classList.remove('pop-animate'); void el.offsetWidth; el.classList.add('pop-animate'); }
 function removeWithExit(el, callback) { if (!el) { callback(); return; } el.classList.add('row-exit'); setTimeout(callback, 250); }
 
@@ -767,6 +790,7 @@ function renderTodoRows(container, items, showTag, editable) {
     row.className = 'todo-row';
     row.dataset.itemId = item.ref.id;
     row.innerHTML = `
+      ${editable ? `<div class="drag-handle" title="Drag to reorder">⠿</div>` : ''}
       <div class="check"></div>
       <div style="flex:1; min-width:0;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
       ${item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
@@ -778,6 +802,25 @@ function renderTodoRows(container, items, showTag, editable) {
       const kebab = buildKebabMenu(row, []);
       kebab.setActions(baseKebabActionsFor(item, kebab, row));
       row.addEventListener('contextmenu', (e) => { e.preventDefault(); kebab.openAt(e.clientX, e.clientY); });
+      row.draggable = true;
+      row.addEventListener('dragstart', (e) => {
+        if (e.target.closest('input, .check, .kebab-menu')) { e.preventDefault(); return; }
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.ref.id);
+        setTimeout(() => row.classList.add('dragging'), 0);
+      });
+      row.addEventListener('dragend', () => row.classList.remove('dragging'));
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        if (!draggedId) return;
+        reorderItems(items, draggedId, item.ref.id, (it) => it.ref.id);
+        clickTick();
+        navigate('todo');
+      });
     }
     container.appendChild(row);
   });
@@ -967,8 +1010,10 @@ function renderDailyTodoDay() {
       const item = { kind: 'todo', ref: t, brand: t.brand || null };
       const row = document.createElement('div');
       row.className = 'todo-row';
-    row.dataset.itemId = item.ref.id;
+      row.dataset.itemId = item.ref.id;
+      row.draggable = true;
       row.innerHTML = `
+        <div class="drag-handle" title="Drag to reorder">⠿</div>
         <div class="check"></div>
         <div class="todo-title" style="flex:1; min-width:0;"></div>
         <div class="quick-date-actions">
@@ -984,6 +1029,30 @@ function renderDailyTodoDay() {
       row.querySelector('[data-a="tomorrow"]').addEventListener('click', () => { t.date = fmt(addDays(todayISO(), 1)); Store.saveTodos(); clickTick(); navigate('todo'); });
       createDatePicker(row.querySelector('.qd-pick-slot'), null, (iso) => { t.date = iso; Store.saveTodos(); clickTick(); navigate('todo'); });
       row.querySelector('.icon-btn').addEventListener('click', () => deleteTodoItem(item));
+      row.addEventListener('dragstart', (e) => {
+        if (e.target.closest('input, .check, .icon-btn, .date-picker, button')) { e.preventDefault(); return; }
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', t.id);
+        setTimeout(() => row.classList.add('dragging'), 0);
+      });
+      row.addEventListener('dragend', () => row.classList.remove('dragging'));
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        if (!draggedId) return;
+        const fromIdx = unscheduled.findIndex(x => x.id === draggedId);
+        const toIdx = unscheduled.findIndex(x => x.id === t.id);
+        if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+        const [moved] = unscheduled.splice(fromIdx, 1);
+        unscheduled.splice(toIdx, 0, moved);
+        unscheduled.forEach((x, idx) => x.order = idx);
+        Store.saveTodos();
+        clickTick();
+        navigate('todo');
+      });
       unschedContainer.appendChild(row);
     });
   }
