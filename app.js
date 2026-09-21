@@ -1141,7 +1141,7 @@ function renderProjectDetail() {
 function renderGantt() {
   const tabMount = document.getElementById('tabMount');
   const timeline = brandData().timeline;
-  const dayWidth = 14;
+  const dayWidth = 22;
   const labelWidth = window.innerWidth <= 760 ? 140 : 230;
 
   function buildBody() {
@@ -1170,10 +1170,10 @@ function renderGantt() {
           const left = daysBetween(rangeStart, parseISO(s)) * dayWidth;
           const width = (daysBetween(parseISO(s), parseISO(e)) + 1) * dayWidth - 3;
           const dlabel = s === e ? parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${parseISO(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} → ${parseISO(e).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
-          barsHTML += `<div class="gantt-bar" title="${r.item.task} — ${dlabel}" style="left:${left}px; width:${Math.max(width, 5)}px;"></div>`;
+          barsHTML += `<div class="gantt-bar" title="${r.item.task} — ${dlabel}" style="left:${left}px; width:${Math.max(width, 5)}px;"></div><div class="gantt-bar-date" style="left:${left + Math.max(width, 5) + 8}px;">${dlabel}</div>`;
         });
-        rowsHTML += `<div class="gantt-row">
-          <div class="gantt-label" title="${r.item.task}"><span>${r.item.task}</span><button class="gantt-delete-btn" data-idx="${idx}">×</button></div>
+        rowsHTML += `<div class="gantt-row" data-idx="${idx}">
+          <div class="gantt-label" title="${r.item.task}"><span class="gantt-name-edit"></span><button class="gantt-edit-btn" data-idx="${idx}" title="Edit">✎</button><button class="gantt-delete-btn" data-idx="${idx}">×</button></div>
           <div class="gantt-track" style="width:${canvasWidth}px;">${barsHTML}</div>
         </div>`;
       }
@@ -1189,7 +1189,11 @@ function renderGantt() {
       monthLabelsHTML += `<div class="gantt-month-label" style="left:${x + 5}px;">${cursor.toLocaleDateString('en-GB', { month: 'short' })}</div>`;
       cursor.setMonth(cursor.getMonth() + 1);
     }
-    for (let d = 0; d <= totalDays; d += 7) { tickHTML += `<div class="gantt-day-tick" style="left:${d * dayWidth + 3}px;">${addDays(rangeStart, d).getDate()}</div>`; }
+    for (let d = 0; d <= totalDays; d++) {
+      const dDate = addDays(rangeStart, d);
+      const isToday = fmt(dDate) === todayISO();
+      tickHTML += `<div class="gantt-day-tick ${isToday ? 'is-today' : ''}" style="left:${d * dayWidth + 3}px;">${dDate.getDate()}</div>`;
+    }
 
     const todayOffset = daysBetween(rangeStart, parseISO(todayISO()));
     const clampedOffset = Math.max(0, Math.min(todayOffset, totalDays));
@@ -1235,6 +1239,21 @@ function renderGantt() {
     Store.saveBrand(state.brand);
     clickTick();
     renderGantt();
+  });
+  tabMount.querySelectorAll('.gantt-row[data-idx]').forEach(rowEl => {
+    const idx = parseInt(rowEl.dataset.idx, 10);
+    const it = timeline[idx];
+    const nameSpan = rowEl.querySelector('.gantt-name-edit');
+    nameSpan.textContent = it.task;
+    makeInlineEditable(nameSpan, () => it.task, (val) => { it.task = val; Store.saveBrand(state.brand); });
+  });
+  tabMount.querySelectorAll('.gantt-edit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx, 10);
+      const it = timeline[idx];
+      openGanttEditPanel(btn, it);
+    });
   });
   tabMount.querySelectorAll('.gantt-delete-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1329,6 +1348,46 @@ function renderAddTaskForm(container, projectId) {
     renderTaskTracker();
     const newRow = document.querySelector(`[data-task="${newId}"]`)?.closest('.task-item');
     if (newRow) newRow.classList.add('row-enter');
+  });
+}
+
+function openGanttEditPanel(anchorBtn, item) {
+  const existing = document.getElementById('ganttEditPanel');
+  if (existing) existing.remove();
+  const panel = document.createElement('div');
+  panel.id = 'ganttEditPanel';
+  panel.className = 'kebab-dropdown gantt-edit-panel';
+  panel.innerHTML = `
+    <div class="gantt-edit-field"><label>Category</label><input type="text" id="geCat" value="${item.cat.replace(/"/g, '&quot;')}"></div>
+    <div class="gantt-edit-field"><label>Owner</label><input type="text" id="geOwner" value="${item.owner.replace(/"/g, '&quot;')}"></div>
+    <div class="gantt-edit-field"><label>Start date</label><div id="geStartSlot"></div></div>
+    <div class="gantt-edit-field"><label>End date</label><div id="geEndSlot"></div></div>
+    <button type="button" id="geSave">Save</button>`;
+  document.body.appendChild(panel);
+  const rect = anchorBtn.getBoundingClientRect();
+  panel.style.position = 'fixed';
+  panel.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+  panel.style.top = (rect.bottom + 6) + 'px';
+  const startPicker = createDatePicker(document.getElementById('geStartSlot'), item.dates[0], () => {}, 'Start date');
+  const endPicker = createDatePicker(document.getElementById('geEndSlot'), item.dates[item.dates.length - 1], () => {}, 'End date');
+  requestAnimationFrame(() => panel.classList.add('open'));
+  function close() { panel.classList.remove('open'); setTimeout(() => panel.remove(), 200); activePopoverClose = null; document.removeEventListener('click', outsideClick); }
+  function outsideClick(e) { if (!panel.contains(e.target) && e.target !== anchorBtn) close(); }
+  setTimeout(() => document.addEventListener('click', outsideClick), 0);
+  openExclusive(close, () => {});
+  panel.querySelector('#geSave').addEventListener('click', (e) => {
+    e.stopPropagation();
+    item.cat = document.getElementById('geCat').value.trim() || item.cat;
+    item.owner = document.getElementById('geOwner').value.trim() || item.owner;
+    const start = startPicker.getValue() || item.dates[0];
+    const end = endPicker.getValue() || start;
+    const out = []; let cur = parseISO(start); const endD = parseISO(end);
+    while (cur <= endD) { out.push(fmt(cur)); cur = addDays(cur, 1); }
+    item.dates = out;
+    Store.saveBrand(state.brand);
+    clickTick();
+    close();
+    renderGantt();
   });
 }
 
