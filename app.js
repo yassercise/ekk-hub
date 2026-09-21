@@ -1377,7 +1377,7 @@ function renderTaskTracker() {
           </div>
           <div>
             <div class="detail-block-title">Notes</div>
-            <div class="detail-notes">${t.notes || 'No notes.'}</div>
+            <textarea class="detail-notes-input" placeholder="Add notes for this task…">${(t.notes || '').replace(/</g, '&lt;')}</textarea>
             ${t.deps.length ? `<div class="detail-block-title" style="margin-top:16px;">Depends on</div>${t.deps.map(id => { const dt = tasks.find(x => x.id === id); return dt ? `<span class="dep-chip">${dt.title}</span>` : ''; }).join('')}` : ''}
           </div>
         </div>
@@ -1388,6 +1388,7 @@ function renderTaskTracker() {
     makeInlineEditable(item.querySelector('.t-cat-edit'), () => t.cat, (val) => { t.cat = val; Store.saveBrand(state.brand); });
     item.querySelector('.t-owner-edit').textContent = t.owner;
     makeInlineEditable(item.querySelector('.t-owner-edit'), () => t.owner, (val) => { t.owner = val; Store.saveBrand(state.brand); });
+    item.querySelector('.detail-notes-input').addEventListener('change', (e) => { t.notes = e.target.value; Store.saveBrand(state.brand); });
     mountPriorityPicker(item.querySelector('.task-priority-mount'), t, () => { Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
     createDatePicker(item.querySelector('.task-due-mount'), t.due || null, (iso) => { t.due = iso || ''; Store.saveBrand(state.brand); clickTick(); renderTaskTracker(); });
     const taskKebab = buildKebabMenu(item.querySelector('.task-row-kebab-mount'), [
