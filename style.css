@@ -656,3 +656,10 @@ button, input, select, textarea {
 .gantt-edit-field label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); margin-bottom: 4px; }
 .gantt-edit-field input { width: 100%; height: 36px; box-sizing: border-box; border: 1px solid var(--card-border); border-radius: 8px; padding: 0 10px; font-size: 13px; font-family: 'Manrope', sans-serif; background: #FAFAFD; }
 .gantt-edit-panel #geSave { width: 100%; height: 38px; margin-top: 4px; }
+
+/* ---------- Internal scroll for long subtask lists ---------- */
+.subtasks-scroll { max-height: 420px; overflow-y: auto; padding-right: 6px; }
+.subtasks-scroll::-webkit-scrollbar { width: 6px; }
+.subtasks-scroll::-webkit-scrollbar-track { background: transparent; }
+.subtasks-scroll::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
+.subtasks-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }

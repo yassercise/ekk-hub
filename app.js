@@ -1431,7 +1431,7 @@ function renderTaskTracker() {
         <div class="task-detail-grid">
           <div>
             <div class="detail-block-title">Subtasks</div>
-            <div id="subtasks-${t.id}"></div>
+            <div id="subtasks-${t.id}" class="subtasks-scroll"></div>
             <div class="add-subtask-row"><input type="text" id="newSub-${t.id}" placeholder="Add a subtask…"><button data-task="${t.id}" class="addSubBtn">Add</button></div>
           </div>
           <div>
@@ -1472,6 +1472,10 @@ function renderTaskTracker() {
       setTimeout(() => renderTaskTracker(), 340);
     });
     list.appendChild(item);
+    if (isOpen) {
+      const detailEl = item.querySelector('.task-detail');
+      requestAnimationFrame(() => { detailEl.style.maxHeight = detailEl.scrollHeight + 40 + 'px'; });
+    }
 
     if (isOpen) {
       const sub = item.querySelector(`#subtasks-${t.id}`);
