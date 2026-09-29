@@ -23,22 +23,37 @@
       @keyframes ls-draw { to { stroke-dashoffset: 0; } }
       @keyframes ls-orb-drift { 0%{transform:translate(0,0)} 50%{transform:translate(30px,-20px)} 100%{transform:translate(0,0)} }
       @keyframes ls-fade-up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes ls-grid-drift { from{background-position:0 0;} to{background-position:-48px -48px;} }
+      @keyframes ls-tick { 0%,100%{opacity:0.25} 50%{opacity:1} }
+      .ls-grid { position:absolute; inset:-48px; background-image:radial-gradient(rgba(20,22,27,0.10) 1px, transparent 1px); background-size:24px 24px; animation:ls-grid-drift 6s linear infinite; }
       .ls-orb { position:absolute; border-radius:50%; filter:blur(60px); opacity:0.35; }
       .ls-orb-a { width:340px; height:340px; background:#14161B; top:-100px; left:-80px; animation:ls-orb-drift 9s ease-in-out infinite; }
       .ls-orb-b { width:280px; height:280px; background:#868D99; bottom:-100px; right:-60px; animation:ls-orb-drift 11s ease-in-out infinite reverse; }
       .ls-infinity-path { fill:none; stroke:#14161B; stroke-width:5; stroke-linecap:round; stroke-dasharray:400; stroke-dashoffset:400; animation:ls-draw 1.8s cubic-bezier(0.65,0,0.35,1) forwards, ls-draw 1.8s cubic-bezier(0.65,0,0.35,1) 2.4s forwards; }
+      .ls-ticks { display:flex; gap:5px; justify-content:center; margin-top:14px; }
+      .ls-ticks span { width:4px; height:4px; border-radius:50%; background:#14161B; animation:ls-tick 1.2s ease-in-out infinite; }
+      .ls-ticks span:nth-child(2) { animation-delay:0.15s; }
+      .ls-ticks span:nth-child(3) { animation-delay:0.3s; }
     </style>
+    <div class="ls-grid"></div>
     <div class="ls-orb ls-orb-a"></div>
     <div class="ls-orb ls-orb-b"></div>
     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;">
-      <svg viewBox="0 0 120 60" style="width:120px; height:60px; margin-bottom:28px;">
+      <svg viewBox="0 0 120 60" style="width:120px; height:60px; margin-bottom:20px; overflow:visible;">
         <path class="ls-infinity-path" d="M30,30 C30,18 40,10 50,20 C58,28 62,32 70,40 C80,50 90,42 90,30 C90,18 80,10 70,20 C62,28 58,32 50,40 C40,50 30,42 30,30 Z"/>
+        <circle r="3.5" fill="#14161B">
+          <animateMotion dur="3.2s" repeatCount="indefinite" path="M30,30 C30,18 40,10 50,20 C58,28 62,32 70,40 C80,50 90,42 90,30 C90,18 80,10 70,20 C62,28 58,32 50,40 C40,50 30,42 30,30 Z"/>
+        </circle>
+        <circle r="2.2" fill="#868D99">
+          <animateMotion dur="3.2s" begin="-1.6s" repeatCount="indefinite" path="M30,30 C30,18 40,10 50,20 C58,28 62,32 70,40 C80,50 90,42 90,30 C90,18 80,10 70,20 C62,28 58,32 50,40 C40,50 30,42 30,30 Z"/>
+        </circle>
       </svg>
       <div style="animation:ls-fade-up 600ms ease both; animation-delay:200ms;">
         <div style="font-family:'Anton',sans-serif; font-size:26px; color:#14161B; letter-spacing:0.04em; text-align:center;">EKK HUB</div>
         <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:rgba(20,22,27,0.4); letter-spacing:0.2em; text-align:center; margin-top:4px;">MARKETING OPERATIONS</div>
       </div>
-      <div style="margin-top:40px; width:160px; animation:ls-fade-up 600ms ease both; animation-delay:400ms;">
+      <div class="ls-ticks"><span></span><span></span><span></span></div>
+      <div style="margin-top:24px; width:160px; animation:ls-fade-up 600ms ease both; animation-delay:400ms;">
         <div style="height:2px; background:rgba(20,22,27,0.08); border-radius:2px; overflow:hidden;">
           <div id="loadingBar" style="height:100%; width:0%; background:#14161B; border-radius:2px; transition:width 300ms ease;"></div>
         </div>
