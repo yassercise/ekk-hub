@@ -32,12 +32,13 @@ const SEED = {
 };
 const BRAND_KEYS = ['kdr', 'kvl', 'kpv', 'gst', 'gtg'];
 const BRAND_META = {
-  kdr: { color: '#14161B', soft: 'rgba(20,22,27,0.08)', label: 'KDR · DAILY RENTAL' },
-  kvl: { color: '#565C68', soft: 'rgba(86,92,104,0.10)', label: 'KVL · VEHICLE LEASING' },
-  kpv: { color: '#868D99', soft: 'rgba(134,141,153,0.12)', label: 'KPV · PRE-OWNED VEHICLES' },
-  gst: { color: '#2B2E35', soft: 'rgba(43,46,53,0.09)', label: 'GST · GOLDEN STITCH' },
-  gtg: { color: '#9DA3AD', soft: 'rgba(157,163,173,0.14)', label: 'GTG · GOLDEN TAG' }
+  kdr: { color: '#14161B', soft: 'rgba(20,22,27,0.08)', label: 'KDR · DAILY RENTAL', short: 'KDR' },
+  kvl: { color: '#565C68', soft: 'rgba(86,92,104,0.10)', label: 'KVL · VEHICLE LEASING', short: 'KVL' },
+  kpv: { color: '#868D99', soft: 'rgba(134,141,153,0.12)', label: 'KPV · PRE-OWNED VEHICLES', short: 'KPV' },
+  gst: { color: '#2B2E35', soft: 'rgba(43,46,53,0.09)', label: 'GST · GOLDEN STITCH', short: 'GS' },
+  gtg: { color: '#9DA3AD', soft: 'rgba(157,163,173,0.14)', label: 'GTG · GOLDEN TAG', short: 'GT' }
 };
+function brandLabel(key) { return (BRAND_META[key] && BRAND_META[key].short) || (key || '').toUpperCase(); }
 const NEUTRAL = { color: '#12141A', soft: 'rgba(18,20,26,0.08)' };
 
 /* ============================================================
@@ -386,6 +387,30 @@ function reorderItems(list, fromId, toId, getId) {
   touchedBrands.forEach(b => b === '__todos__' ? Store.saveTodos() : Store.saveBrand(b));
 }
 
+function buildEcgSegment(period, spikeHeight, jitter) {
+  const y = 30;
+  const j = jitter ? (Math.random() - 0.5) * jitter : 0;
+  const peak = y - spikeHeight / 2 + j;
+  const trough = y + spikeHeight / 2 + j;
+  return `L${period * 0.32},${y} L${period * 0.35},${y - spikeHeight * 0.15} L${period * 0.38},${y} L${period * 0.40},${peak} L${period * 0.43},${trough} L${period * 0.46},${y - spikeHeight * 0.08} L${period * 0.55},${y - spikeHeight * 0.12} L${period * 0.6},${y} L${period},${y}`;
+}
+function renderPulseMonitor() {
+  const container = document.getElementById('pulseMonitor');
+  const pathEl = document.getElementById('pulsePath');
+  const labelEl = document.getElementById('pulseLabel');
+  if (!container || !pathEl) return;
+  const count = typeof completedCountInRange === 'function' ? completedCountInRange(todayISO(), todayISO()) : 0;
+  let tier, period, spike, jitter;
+  if (count < 5) { tier = 'tier-flatline'; period = 60; spike = 6; jitter = 0; }
+  else if (count < 10) { tier = 'tier-unstable'; period = 30; spike = 44; jitter = 6; }
+  else { tier = 'tier-stable'; period = 60; spike = 44; jitter = 0; }
+  container.className = 'pulse-monitor ' + tier;
+  let d = 'M0,30';
+  for (let i = 0; i < Math.ceil(600 / period); i++) { d += buildEcgSegment(period, spike, jitter); }
+  pathEl.setAttribute('d', d);
+  if (labelEl) labelEl.textContent = count + ' today';
+}
+
 function pulse(el) { if (!el) return; el.classList.remove('pop-animate'); void el.offsetWidth; el.classList.add('pop-animate'); }
 function removeWithExit(el, callback) { if (!el) { callback(); return; } el.classList.add('row-exit'); setTimeout(callback, 250); }
 
@@ -562,7 +587,7 @@ function renderAddProjectForm(container, brandKeyFixed) {
         <svg class="csb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="custom-select-menu" id="brandPickerMenu">
-        ${BRAND_KEYS.map(b => `<div class="custom-select-opt" data-b="${b}"><span class="csb-dot" style="background:${BRAND_META[b].color}"></span>${b.toUpperCase()}</div>`).join('')}
+        ${BRAND_KEYS.map(b => `<div class="custom-select-opt" data-b="${b}"><span class="csb-dot" style="background:${BRAND_META[b].color}"></span>${brandLabel(b)}</div>`).join('')}
       </div>
     </div>`;
   wrap.innerHTML = `
@@ -658,7 +683,7 @@ function renderGlobalOverview() {
     const card = document.createElement('div');
     card.className = 'card brand-card hoverable';
     card.innerHTML = `
-      <div class="brand-card-head"><div class="dot" style="background:${meta.color}"></div><div class="bname">${brandKey.toUpperCase()}</div></div>
+      <div class="brand-card-head"><div class="dot" style="background:${meta.color}"></div><div class="bname">${brandLabel(brandKey)}</div></div>
       <div class="brand-mini-stats">
         <div class="brand-mini-stat"><div class="l">Projects</div><div class="v">${s.activeProjects}</div></div>
         <div class="brand-mini-stat"><div class="l">Completed</div><div class="v">${s.pctDone}%</div></div>
@@ -666,7 +691,7 @@ function renderGlobalOverview() {
         <div class="brand-mini-stat"><div class="l">Overdue</div><div class="v" style="color:${s.overdue ? 'var(--behind-text)' : 'var(--text)'}">${s.overdue}</div></div>
       </div>
       ${topProject ? `<div class="brand-card-top-project">Top project: <b>${topProject.name}</b></div>` : `<div class="brand-card-top-project">No active projects yet.</div>`}
-      <div class="brand-card-cta" style="color:${meta.color}">View ${brandKey.toUpperCase()} →</div>`;
+      <div class="brand-card-cta" style="color:${meta.color}">View ${brandLabel(brandKey)} →</div>`;
     card.addEventListener('click', () => { state.brand = brandKey; navigate('overview'); });
     grid.appendChild(card);
   });
@@ -794,7 +819,7 @@ function renderTodoRows(container, items, showTag, editable) {
       <div class="check"></div>
       <div style="flex:1; min-width:0;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
       ${item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
-      ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
+      ${showTag && meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandLabel(item.brand)}</div>` : ''}`;
     row.querySelector('.check').addEventListener('click', (e) => { toggleItem(item); pulse(e.currentTarget); setTimeout(() => navigate('todo'), 220); });
 
     if (editable) {
@@ -835,7 +860,7 @@ function openPickDateMenu(kebab, item) {
 
 function openBrandAssignMenu(kebab, item) {
   const list = BRAND_KEYS.map(b => ({
-    label: `<span class="csb-dot" style="background:${BRAND_META[b].color}; display:inline-block; margin-right:8px;"></span>${b.toUpperCase()}`,
+    label: `<span class="csb-dot" style="background:${BRAND_META[b].color}; display:inline-block; margin-right:8px;"></span>${brandLabel(b)}`,
     onClick: () => { item.ref.brand = b; Store.saveTodos(); clickTick(); navigate('todo'); }
   }));
   kebab.setActions([{ label: '← Back', back: true, onClick: () => kebab.setActions(baseKebabActionsFor(item, kebab)) }, ...list]);
@@ -844,7 +869,7 @@ function openBrandAssignMenu(kebab, item) {
 function openProjectAssignMenu(kebab, item) {
   const projects = allProjectsFlat();
   const list = projects.length
-    ? projects.map((pr, i) => ({ label: `${pr.brandKey.toUpperCase()} · ${pr.project.name}`, onClick: () => {
+    ? projects.map((pr, i) => ({ label: `${brandLabel(pr.brandKey)} · ${pr.project.name}`, onClick: () => {
         item.ref.brand = pr.brandKey; item.ref.projectId = pr.project.id; Store.saveTodos(); clickTick(); navigate('todo');
       }}))
     : [{ label: 'No projects yet', onClick: () => {} }];
@@ -995,7 +1020,7 @@ function renderDailyTodoDay() {
       const meta = item.brand ? BRAND_META[item.brand] : null;
       const row = document.createElement('div');
       row.className = 'todo-row is-done';
-      row.innerHTML = `<div class="check checked">✓</div><div style="flex:1;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>${meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${item.brand.toUpperCase()}</div>` : ''}`;
+      row.innerHTML = `<div class="check checked">✓</div><div style="flex:1;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>${meta ? `<div class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandLabel(item.brand)}</div>` : ''}`;
       row.querySelector('.check').addEventListener('click', (e) => { toggleItem(item); pulse(e.currentTarget); setTimeout(() => navigate('todo'), 220); });
       doneContainer.appendChild(row);
     });
@@ -1097,7 +1122,7 @@ function renderAllProjectsGlobal() {
       row.style.gridTemplateColumns = '2fr 90px 1fr 1fr';
       row.innerHTML = `
         <div><div class="campaign-name">${p.name}<span class="project-type-pill">${p.type || 'Project'}</span></div><div class="campaign-cat">${metaLine}</div></div>
-        <div><span class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandKey.toUpperCase()}</span></div>
+        <div><span class="todo-brand-tag" style="background:${meta.soft}; color:${meta.color};">${brandLabel(brandKey)}</span></div>
         <div><div class="progress-track"><div class="progress-fill" style="width:${counts.pct}%"></div></div><div class="progress-label">${counts.pct}%</div></div>
         <div class="status-mount"></div>`;
       row.addEventListener('click', (e) => { if (e.target.closest('.kebab-menu')) return; state.brand = brandKey; navigate('project', { projectId: p.id }); });
@@ -1614,6 +1639,7 @@ function renderCurrentView() {
 
 function navigate(view, opts = {}) {
   state.view = view;
+  renderPulseMonitor();
   if (opts.projectId) { state.projectId = opts.projectId; state.projectTab = 'timeline'; }
   const mount = document.getElementById('viewMount');
   const brandActive = (view === 'overview' || view === 'project');
@@ -1638,7 +1664,22 @@ function closeMobileDrawer() {
   document.getElementById('sidebarBackdrop').classList.remove('open');
 }
 
+function setLoadingProgress(pct, label) {
+  const bar = document.getElementById('loadingBar');
+  const lbl = document.getElementById('loadingLabel');
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = label;
+}
+function hideLoadingScreen() {
+  const screen = document.getElementById('loadingScreen');
+  if (!screen) return;
+  screen.style.opacity = '0';
+  screen.style.transform = 'scale(1.04)';
+  setTimeout(() => screen.remove(), 520);
+}
+
 window.addEventListener('load', async () => {
+  setLoadingProgress(10, 'STARTING UP');
   renderYearCountdown();
   initCursor();
   initRipple();
@@ -1658,9 +1699,13 @@ window.addEventListener('load', async () => {
   document.getElementById('sidebarBackdrop').addEventListener('click', closeMobileDrawer);
   document.querySelectorAll('.brand-tab').forEach(tab => tab.addEventListener('click', () => { state.brand = tab.dataset.brand; clickTick(); closeMobileDrawer(); navigate('overview'); }));
   document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { clickTick(); closeMobileDrawer(); navigate(item.dataset.nav === 'overview' ? 'global-overview' : item.dataset.nav); }));
-  document.getElementById('viewMount').innerHTML = `<div style="padding:40px; color:var(--text-dim); font-size:13px;">Loading your data…</div>`;
+  setLoadingProgress(35, 'AUTHENTICATING');
   await signInAnonymously(auth);
+  setLoadingProgress(65, 'SYNCING DATA');
   DATA = await Store.loadAll();
   state.selectedDate = todayISO();
+  setLoadingProgress(90, 'RENDERING');
   navigate('global-overview');
+  setLoadingProgress(100, 'READY');
+  setTimeout(hideLoadingScreen, 350);
 });

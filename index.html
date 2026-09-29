@@ -18,6 +18,41 @@
 </head>
 <body>
 
+  <div id="loadingScreen" style="position:fixed;inset:0;z-index:9999;background:#0A0B0F;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 500ms ease, transform 500ms ease;">
+    <style>
+      @keyframes ls-pulse-ring { 0%{transform:scale(0.8);opacity:0.8} 50%{transform:scale(1.15);opacity:0.3} 100%{transform:scale(0.8);opacity:0.8} }
+      @keyframes ls-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+      @keyframes ls-spin-rev { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+      @keyframes ls-float { 0%{transform:translateY(0px)} 50%{transform:translateY(-10px)} 100%{transform:translateY(0px)} }
+      @keyframes ls-flicker { 0%,100%{opacity:1} 50%{opacity:0.4} }
+      @keyframes ls-fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes ls-scan { 0%{top:0%} 100%{top:100%} }
+      .ls-ring-1 { position:absolute;width:160px;height:160px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.12);animation:ls-pulse-ring 2.4s ease-in-out infinite; }
+      .ls-ring-2 { position:absolute;width:120px;height:120px;border-radius:50%;border:1px dashed rgba(88,166,255,0.3);animation:ls-spin 8s linear infinite; }
+      .ls-ring-3 { position:absolute;width:90px;height:90px;border-radius:50%;border:1px dashed rgba(255,255,255,0.15);animation:ls-spin-rev 6s linear infinite; }
+      .ls-dot { position:absolute;width:4px;height:4px;border-radius:50%;background:#58A6FF;box-shadow:0 0 8px rgba(88,166,255,0.9);animation:ls-flicker 1.5s ease-in-out infinite; }
+    </style>
+    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:36px;animation:ls-float 3s ease-in-out infinite;">
+      <div class="ls-ring-1"></div>
+      <div class="ls-ring-2"><div class="ls-dot" style="top:-2px;left:50%;transform:translateX(-50%);"></div></div>
+      <div class="ls-ring-3"><div class="ls-dot" style="top:-2px;left:50%;transform:translateX(-50%);background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8);animation-delay:0.3s;"></div></div>
+      <div style="width:56px;height:56px;border-radius:16px;overflow:hidden;background:#12141A;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(88,166,255,0.25);">
+        <img src="infinity-logo.png" style="width:44px;height:44px;object-fit:contain;filter:invert(1) brightness(1.4);">
+      </div>
+    </div>
+    <div style="animation:ls-fade-up 600ms ease both;animation-delay:200ms;">
+      <div style="font-family:'Anton',sans-serif;font-size:28px;color:#fff;letter-spacing:0.06em;text-align:center;">EKK HUB</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.2em;text-align:center;margin-top:4px;">MARKETING OPERATIONS</div>
+    </div>
+    <div style="margin-top:44px;width:160px;animation:ls-fade-up 600ms ease both;animation-delay:400ms;">
+      <div style="height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
+        <div id="loadingBar" style="height:100%;width:0%;background:linear-gradient(90deg,#58A6FF,#fff);border-radius:2px;transition:width 300ms ease;"></div>
+      </div>
+      <div id="loadingLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center;letter-spacing:0.1em;">INITIALIZING</div>
+    </div>
+    <div style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(88,166,255,0.4),transparent);animation:ls-scan 3s ease-in-out infinite;pointer-events:none;"></div>
+  </div>
+
   <div class="titlebar-drag-region"></div>
   <div class="mobile-topbar">
     <button class="hamburger-btn" id="hamburgerBtn">
@@ -31,7 +66,12 @@
   <div class="orb orb-2"></div>
 
   <aside class="sidebar">
-    <div class="wordmark">YASSER'S EKK<span>HUB</span></div>
+    <div class="pulse-monitor" id="pulseMonitor">
+      <svg id="pulseSvg" viewBox="0 0 300 60" preserveAspectRatio="none">
+        <path id="pulsePath" d="" />
+      </svg>
+      <div class="pulse-label" id="pulseLabel">0 today</div>
+    </div>
 
     <div class="rail-label">Menu</div>
     <nav class="main-nav" id="mainNav">
@@ -63,10 +103,10 @@
         <div class="dot"></div><span class="name">KPV</span>
       </button>
       <button class="brand-tab" data-brand="gst" style="--dot-color:#2B2E35">
-        <div class="dot"></div><span class="name">GST</span>
+        <div class="dot"></div><span class="name">GS</span>
       </button>
       <button class="brand-tab" data-brand="gtg" style="--dot-color:#9DA3AD">
-        <div class="dot"></div><span class="name">GTG</span>
+        <div class="dot"></div><span class="name">GT</span>
       </button>
     </div>
 
