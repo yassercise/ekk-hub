@@ -397,18 +397,17 @@ function buildEcgSegment(period, spikeHeight, jitter) {
 function renderPulseMonitor() {
   const container = document.getElementById('pulseMonitor');
   const pathEl = document.getElementById('pulsePath');
-  const labelEl = document.getElementById('pulseLabel');
   if (!container || !pathEl) return;
   const count = typeof completedCountInRange === 'function' ? completedCountInRange(todayISO(), todayISO()) : 0;
   let tier, period, spike, jitter;
-  if (count < 5) { tier = 'tier-flatline'; period = 60; spike = 6; jitter = 0; }
-  else if (count < 10) { tier = 'tier-unstable'; period = 30; spike = 44; jitter = 6; }
-  else { tier = 'tier-stable'; period = 60; spike = 44; jitter = 0; }
+  if (count < 5) { tier = 'tier-flatline'; period = 150; spike = 0; jitter = 0; }
+  else if (count < 10) { tier = 'tier-unstable'; period = 30; spike = 40; jitter = 6; }
+  else { tier = 'tier-stable'; period = 50; spike = 38; jitter = 0; }
   container.className = 'pulse-monitor ' + tier;
   let d = 'M0,30';
-  for (let i = 0; i < Math.ceil(600 / period); i++) { d += buildEcgSegment(period, spike, jitter); }
+  const repeats = 300 / period;
+  for (let i = 0; i < repeats; i++) { d += buildEcgSegment(period, spike, jitter); }
   pathEl.setAttribute('d', d);
-  if (labelEl) labelEl.textContent = count + ' today';
 }
 
 function pulse(el) { if (!el) return; el.classList.remove('pop-animate'); void el.offsetWidth; el.classList.add('pop-animate'); }

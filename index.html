@@ -18,39 +18,33 @@
 </head>
 <body>
 
-  <div id="loadingScreen" style="position:fixed;inset:0;z-index:9999;background:#0A0B0F;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 500ms ease, transform 500ms ease;">
+  <div id="loadingScreen" style="position:fixed;inset:0;z-index:9999;background:#F7F7F9;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:opacity 500ms ease, transform 500ms ease;">
     <style>
-      @keyframes ls-pulse-ring { 0%{transform:scale(0.8);opacity:0.8} 50%{transform:scale(1.15);opacity:0.3} 100%{transform:scale(0.8);opacity:0.8} }
-      @keyframes ls-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-      @keyframes ls-spin-rev { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
-      @keyframes ls-float { 0%{transform:translateY(0px)} 50%{transform:translateY(-10px)} 100%{transform:translateY(0px)} }
-      @keyframes ls-flicker { 0%,100%{opacity:1} 50%{opacity:0.4} }
-      @keyframes ls-fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-      @keyframes ls-scan { 0%{top:0%} 100%{top:100%} }
-      .ls-ring-1 { position:absolute;width:160px;height:160px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.12);animation:ls-pulse-ring 2.4s ease-in-out infinite; }
-      .ls-ring-2 { position:absolute;width:120px;height:120px;border-radius:50%;border:1px dashed rgba(88,166,255,0.3);animation:ls-spin 8s linear infinite; }
-      .ls-ring-3 { position:absolute;width:90px;height:90px;border-radius:50%;border:1px dashed rgba(255,255,255,0.15);animation:ls-spin-rev 6s linear infinite; }
-      .ls-dot { position:absolute;width:4px;height:4px;border-radius:50%;background:#58A6FF;box-shadow:0 0 8px rgba(88,166,255,0.9);animation:ls-flicker 1.5s ease-in-out infinite; }
+      @keyframes ls-draw { to { stroke-dashoffset: 0; } }
+      @keyframes ls-orb-drift { 0%{transform:translate(0,0)} 50%{transform:translate(30px,-20px)} 100%{transform:translate(0,0)} }
+      @keyframes ls-fade-up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+      .ls-orb { position:absolute; border-radius:50%; filter:blur(60px); opacity:0.35; }
+      .ls-orb-a { width:340px; height:340px; background:#14161B; top:-100px; left:-80px; animation:ls-orb-drift 9s ease-in-out infinite; }
+      .ls-orb-b { width:280px; height:280px; background:#868D99; bottom:-100px; right:-60px; animation:ls-orb-drift 11s ease-in-out infinite reverse; }
+      .ls-infinity-path { fill:none; stroke:#14161B; stroke-width:5; stroke-linecap:round; stroke-dasharray:400; stroke-dashoffset:400; animation:ls-draw 1.8s cubic-bezier(0.65,0,0.35,1) forwards, ls-draw 1.8s cubic-bezier(0.65,0,0.35,1) 2.4s forwards; }
     </style>
-    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:36px;animation:ls-float 3s ease-in-out infinite;">
-      <div class="ls-ring-1"></div>
-      <div class="ls-ring-2"><div class="ls-dot" style="top:-2px;left:50%;transform:translateX(-50%);"></div></div>
-      <div class="ls-ring-3"><div class="ls-dot" style="top:-2px;left:50%;transform:translateX(-50%);background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8);animation-delay:0.3s;"></div></div>
-      <div style="width:56px;height:56px;border-radius:16px;overflow:hidden;background:#12141A;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(88,166,255,0.25);">
-        <img src="infinity-logo.png" style="width:44px;height:44px;object-fit:contain;filter:invert(1) brightness(1.4);">
+    <div class="ls-orb ls-orb-a"></div>
+    <div class="ls-orb ls-orb-b"></div>
+    <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;">
+      <svg viewBox="0 0 120 60" style="width:120px; height:60px; margin-bottom:28px;">
+        <path class="ls-infinity-path" d="M30,30 C30,18 40,10 50,20 C58,28 62,32 70,40 C80,50 90,42 90,30 C90,18 80,10 70,20 C62,28 58,32 50,40 C40,50 30,42 30,30 Z"/>
+      </svg>
+      <div style="animation:ls-fade-up 600ms ease both; animation-delay:200ms;">
+        <div style="font-family:'Anton',sans-serif; font-size:26px; color:#14161B; letter-spacing:0.04em; text-align:center;">EKK HUB</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:rgba(20,22,27,0.4); letter-spacing:0.2em; text-align:center; margin-top:4px;">MARKETING OPERATIONS</div>
+      </div>
+      <div style="margin-top:40px; width:160px; animation:ls-fade-up 600ms ease both; animation-delay:400ms;">
+        <div style="height:2px; background:rgba(20,22,27,0.08); border-radius:2px; overflow:hidden;">
+          <div id="loadingBar" style="height:100%; width:0%; background:#14161B; border-radius:2px; transition:width 300ms ease;"></div>
+        </div>
+        <div id="loadingLabel" style="font-family:'JetBrains Mono',monospace; font-size:10px; color:rgba(20,22,27,0.35); margin-top:8px; text-align:center; letter-spacing:0.1em;">INITIALIZING</div>
       </div>
     </div>
-    <div style="animation:ls-fade-up 600ms ease both;animation-delay:200ms;">
-      <div style="font-family:'Anton',sans-serif;font-size:28px;color:#fff;letter-spacing:0.06em;text-align:center;">EKK HUB</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.2em;text-align:center;margin-top:4px;">MARKETING OPERATIONS</div>
-    </div>
-    <div style="margin-top:44px;width:160px;animation:ls-fade-up 600ms ease both;animation-delay:400ms;">
-      <div style="height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
-        <div id="loadingBar" style="height:100%;width:0%;background:linear-gradient(90deg,#58A6FF,#fff);border-radius:2px;transition:width 300ms ease;"></div>
-      </div>
-      <div id="loadingLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center;letter-spacing:0.1em;">INITIALIZING</div>
-    </div>
-    <div style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(88,166,255,0.4),transparent);animation:ls-scan 3s ease-in-out infinite;pointer-events:none;"></div>
   </div>
 
   <div class="titlebar-drag-region"></div>
@@ -70,7 +64,6 @@
       <svg id="pulseSvg" viewBox="0 0 300 60" preserveAspectRatio="none">
         <path id="pulsePath" d="" />
       </svg>
-      <div class="pulse-label" id="pulseLabel">0 today</div>
     </div>
 
     <div class="rail-label">Menu</div>

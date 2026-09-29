@@ -665,14 +665,14 @@ button, input, select, textarea {
 .subtasks-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
 
 /* ---------- Sidebar pulse monitor (replaces text wordmark) ---------- */
-.pulse-monitor { position: relative; width: 100%; height: 58px; overflow: hidden; border-radius: 12px; background: #0A0B0F; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.4); }
+.pulse-monitor { position: relative; width: 100%; height: 46px; overflow: hidden; margin-bottom: 20px; }
 #pulseSvg { position: absolute; top: 0; left: 0; width: 200%; height: 100%; animation: pulseScroll 2.2s linear infinite; }
 @keyframes pulseScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-#pulsePath { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; transition: stroke 500ms ease; }
-.pulse-monitor.tier-flatline #pulseSvg { animation-duration: 5s; }
-.pulse-monitor.tier-flatline #pulsePath { stroke: #EF4444; filter: drop-shadow(0 0 5px rgba(239,68,68,0.7)); }
-.pulse-monitor.tier-unstable #pulseSvg { animation-duration: 0.85s; }
-.pulse-monitor.tier-unstable #pulsePath { stroke: #F5A623; filter: drop-shadow(0 0 5px rgba(245,166,35,0.7)); }
-.pulse-monitor.tier-stable #pulseSvg { animation-duration: 2.2s; }
-.pulse-monitor.tier-stable #pulsePath { stroke: #16A863; filter: drop-shadow(0 0 5px rgba(22,168,99,0.7)); }
-.pulse-label { position: absolute; bottom: 5px; right: 9px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); text-transform: uppercase; z-index: 2; }
+#pulsePath { fill: none; stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; transition: stroke 500ms ease; }
+.pulse-monitor.tier-flatline #pulseSvg { animation-duration: 4s; }
+.pulse-monitor.tier-flatline #pulsePath { stroke: #EF4444; filter: drop-shadow(0 0 3px rgba(239,68,68,0.5)); }
+.pulse-monitor.tier-unstable #pulseSvg { animation-duration: 0.8s; }
+.pulse-monitor.tier-unstable #pulsePath { stroke: #F5A623; filter: drop-shadow(0 0 3px rgba(245,166,35,0.5)); }
+.pulse-monitor.tier-stable #pulseSvg { animation-duration: 2.4s; }
+.pulse-monitor.tier-stable #pulsePath { stroke: #16A863; filter: drop-shadow(0 0 3px rgba(22,168,99,0.5)); }
+
