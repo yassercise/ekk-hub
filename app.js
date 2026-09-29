@@ -387,12 +387,15 @@ function reorderItems(list, fromId, toId, getId) {
   touchedBrands.forEach(b => b === '__todos__' ? Store.saveTodos() : Store.saveBrand(b));
 }
 
-function buildEcgSegment(period, spikeHeight, jitter) {
+function buildEcgSegment(offsetX, period, spikeHeight, jitter) {
   const y = 30;
   const j = jitter ? (Math.random() - 0.5) * jitter : 0;
-  const peak = y - spikeHeight / 2 + j;
-  const trough = y + spikeHeight / 2 + j;
-  return `L${period * 0.32},${y} L${period * 0.35},${y - spikeHeight * 0.15} L${period * 0.38},${y} L${period * 0.40},${peak} L${period * 0.43},${trough} L${period * 0.46},${y - spikeHeight * 0.08} L${period * 0.55},${y - spikeHeight * 0.12} L${period * 0.6},${y} L${period},${y}`;
+  const pts = [
+    [0.15, 0], [0.20, -spikeHeight * 0.15], [0.24, 0], [0.30, 0],
+    [0.33, spikeHeight * 0.10 + j], [0.36, -spikeHeight * 0.9 + j], [0.39, spikeHeight * 0.5 + j],
+    [0.42, 0], [0.55, -spikeHeight * 0.2], [0.65, 0], [1, 0]
+  ];
+  return pts.map(([frac, dy]) => `L${(offsetX + frac * period).toFixed(2)},${(y + dy).toFixed(2)}`).join(' ');
 }
 function renderPulseMonitor() {
   const container = document.getElementById('pulseMonitor');
@@ -401,12 +404,12 @@ function renderPulseMonitor() {
   const count = typeof completedCountInRange === 'function' ? completedCountInRange(todayISO(), todayISO()) : 0;
   let tier, period, spike, jitter;
   if (count < 5) { tier = 'tier-flatline'; period = 150; spike = 0; jitter = 0; }
-  else if (count < 10) { tier = 'tier-unstable'; period = 30; spike = 40; jitter = 6; }
-  else { tier = 'tier-stable'; period = 50; spike = 38; jitter = 0; }
+  else if (count < 10) { tier = 'tier-unstable'; period = 50; spike = 30; jitter = 5; }
+  else { tier = 'tier-stable'; period = 75; spike = 30; jitter = 0; }
   container.className = 'pulse-monitor ' + tier;
   let d = 'M0,30';
   const repeats = 300 / period;
-  for (let i = 0; i < repeats; i++) { d += buildEcgSegment(period, spike, jitter); }
+  for (let i = 0; i < repeats; i++) { d += ' ' + buildEcgSegment(i * period, period, spike, jitter); }
   pathEl.setAttribute('d', d);
 }
 
