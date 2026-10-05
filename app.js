@@ -261,11 +261,11 @@ function itemsForDate(dateISO) {
   const active = items.filter(it => !isDone(it));
   const done = items.filter(it => isDone(it));
   active.sort((a, b) => {
-    const overdueDiff = (b.overdue ? 1 : 0) - (a.overdue ? 1 : 0);
-    if (overdueDiff !== 0) return overdueDiff;
-    const oa = a.ref.order !== undefined ? a.ref.order : Infinity;
-    const ob = b.ref.order !== undefined ? b.ref.order : Infinity;
-    return oa - ob;
+    const ha = a.ref.order !== undefined && a.ref.order !== null;
+    const hb = b.ref.order !== undefined && b.ref.order !== null;
+    if (ha && hb) return a.ref.order - b.ref.order;
+    if (ha !== hb) return ha ? -1 : 1;
+    return (b.overdue ? 1 : 0) - (a.overdue ? 1 : 0);
   });
   return { active, done };
 }
@@ -370,22 +370,196 @@ function statusBreakdownHTML(sb) {
 function animateStatusBars(root) { root.querySelectorAll('.status-seg').forEach(seg => requestAnimationFrame(() => { seg.style.width = seg.dataset.w + '%'; })); }
 
 let activePopoverClose = null;
-function reorderItems(list, fromId, toId, getId) {
-  const fromIdx = list.findIndex(it => getId(it) === fromId);
-  const toIdx = list.findIndex(it => getId(it) === toId);
-  if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-  const [moved] = list.splice(fromIdx, 1);
-  list.splice(toIdx, 0, moved);
-  const touchedBrands = new Set();
+/* SORTABLE START */
+const GRIP_SVG = '<svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg>';
+
+// Saves a manual order: writes `order` onto every item and persists the stores that changed.
+function persistOrder(list) {
+  const touched = new Set();
   list.forEach((it, idx) => {
     const ref = it.ref !== undefined ? it.ref : it;
     ref.order = idx;
-    if (it.kind === 'subtask') touchedBrands.add(it.brand);
-    else if (it.kind === 'todo') touchedBrands.add('__todos__');
-    else touchedBrands.add('__todos__');
+    touched.add(it.kind === 'subtask' ? it.brand : '__todos__');
   });
-  touchedBrands.forEach(b => b === '__todos__' ? Store.saveTodos() : Store.saveBrand(b));
+  touched.forEach(b => b === '__todos__' ? Store.saveTodos() : Store.saveBrand(b));
 }
+
+// Pure layout maths: given each row's top/height (in scroll space) and how far the dragged row has moved (dy),
+// which slot is it hovering over, how far must every other row slide to open that slot, and where will it land.
+// A neighbour is "passed" when the dragged row's leading edge crosses that neighbour's midpoint, so the first
+// and last slots are always reachable, whatever the row heights.
+function computeSortState(tops, heights, gap, origIndex, dy) {
+  const n = tops.length;
+  const dTop = tops[origIndex] + dy;
+  const dBottom = dTop + heights[origIndex];
+  let newIndex = origIndex;
+  if (dy > 0) {
+    for (let j = origIndex + 1; j < n; j++) { if (dBottom > tops[j] + heights[j] / 2) newIndex = j; else break; }
+  } else if (dy < 0) {
+    for (let j = origIndex - 1; j >= 0; j--) { if (dTop < tops[j] + heights[j] / 2) newIndex = j; else break; }
+  }
+  const dH = heights[origIndex] + gap;
+  const shifts = new Array(n).fill(0);
+  let finalDy = 0;
+  if (newIndex > origIndex) {
+    for (let j = origIndex + 1; j <= newIndex; j++) { shifts[j] = -dH; finalDy += heights[j] + gap; }
+  } else if (newIndex < origIndex) {
+    for (let j = newIndex; j < origIndex; j++) { shifts[j] = dH; finalDy -= heights[j] + gap; }
+  }
+  return { newIndex, shifts, finalDy };
+}
+
+function getScroller(el) {
+  let p = el.parentElement;
+  while (p && p !== document.body && p !== document.documentElement) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p;
+    p = p.parentElement;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+
+// Live drag-to-reorder: grab the grip, the row lifts and follows the pointer, the other rows slide out
+// of the way in real time, and it settles into its slot on release. Works with mouse and touch.
+function makeSortable(container, opts) {
+  const handleSel = opts.handle || '.drag-handle';
+  container.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    const handleEl = e.target.closest ? e.target.closest(handleSel) : null;
+    if (!handleEl || !container.contains(handleEl)) return;
+    const row = handleEl.closest('[data-item-id]');
+    if (!row || row.parentElement !== container) return;
+    const rows = Array.from(container.children).filter(c => c.dataset && c.dataset.itemId);
+    if (rows.length < 2) return;
+    e.preventDefault();
+    e.stopPropagation();
+    runSort(e, row, rows, container, handleEl, opts.onReorder);
+  });
+  container.addEventListener('contextmenu', (e) => {
+    if (e.target.closest && e.target.closest(handleSel)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+}
+
+function runSort(e, row, rows, container, handleEl, onReorder) {
+  const scroller = getScroller(container);
+  const isDoc = scroller === document.scrollingElement || scroller === document.documentElement;
+  const scrollNow = () => (isDoc ? window.scrollY : scroller.scrollTop);
+  const startScroll = scrollNow();
+  const startY = e.clientY;
+  let lastY = startY;
+  const origIndex = rows.indexOf(row);
+  const rects = rows.map(r => r.getBoundingClientRect());
+  const tops = rects.map(r => r.top + startScroll);
+  const heights = rects.map(r => r.height);
+  const gap = rows.length > 1 ? Math.max(0, tops[1] - (tops[0] + heights[0])) : 0;
+  const minDy = tops[0] - tops[origIndex];
+  const maxDy = (tops[rows.length - 1] + heights[rows.length - 1]) - (tops[origIndex] + heights[origIndex]);
+  const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  let started = false, finished = false, newIndex = origIndex, finalDy = 0, raf = 0;
+
+  try { if (handleEl.setPointerCapture && e.pointerId !== undefined) handleEl.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+
+  function update() {
+    const raw = (lastY - startY) + (scrollNow() - startScroll);
+    const dy = Math.max(minDy, Math.min(maxDy, raw));
+    row.style.transform = `translate3d(0, ${dy}px, 0)`;
+    const st = computeSortState(tops, heights, gap, origIndex, dy);
+    if (st.newIndex !== newIndex) {
+      newIndex = st.newIndex;
+      finalDy = st.finalDy;
+      rows.forEach((r, j) => {
+        if (j !== origIndex) r.style.transform = st.shifts[j] ? `translate3d(0, ${st.shifts[j]}px, 0)` : '';
+      });
+    }
+  }
+
+  function tick() {
+    if (!started || finished) return;
+    const vr = isDoc ? { top: 0, bottom: window.innerHeight } : scroller.getBoundingClientRect();
+    const edge = 70, max = 16;
+    let v = 0;
+    if (lastY < vr.top + edge) v = -max * (1 - Math.max(0, lastY - vr.top) / edge);
+    else if (lastY > vr.bottom - edge) v = max * (1 - Math.max(0, vr.bottom - lastY) / edge);
+    if (v) {
+      if (isDoc) window.scrollBy(0, v); else scroller.scrollTop += v;
+      update();
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function begin() {
+    started = true;
+    document.body.classList.add('sorting');
+    rows.forEach((r, j) => {
+      r.style.willChange = 'transform';
+      if (j === origIndex) return;
+      r.classList.add('sort-sibling');
+      r.style.transition = `transform 260ms ${EASE}`;
+    });
+    row.classList.remove('row-enter');
+    row.classList.add('sort-dragging');
+    row.style.transition = `box-shadow 220ms ease, scale 220ms ${EASE}`;
+    row.style.scale = '1.015';
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (err) { /* ignore */ } }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function detach() {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onCancel);
+    window.removeEventListener('keydown', onKey);
+    cancelAnimationFrame(raf);
+  }
+
+  function settle(commit) {
+    if (finished) return;
+    finished = true;
+    detach();
+    if (!started) return;
+    if (!commit) rows.forEach(r => { if (r !== row) r.style.transform = ''; });
+    row.classList.add('sort-drop');
+    row.style.transition = `transform 260ms ${EASE}, box-shadow 260ms ease, scale 260ms ${EASE}`;
+    row.style.scale = '1';
+    row.style.transform = `translate3d(0, ${commit ? finalDy : 0}px, 0)`;
+    setTimeout(finalize, 285, commit);
+  }
+
+  function finalize(commit) {
+    rows.forEach(r => { r.style.transition = 'none'; r.style.transform = ''; r.style.scale = ''; });
+    if (commit && newIndex !== origIndex) {
+      const order = rows.slice();
+      order.splice(origIndex, 1);
+      order.splice(newIndex, 0, row);
+      container.insertBefore(row, order[newIndex + 1] || null);
+      try { onReorder(order.map(r => r.dataset.itemId)); } catch (err) { console.error(err); }
+      clickTick();
+    }
+    void container.offsetHeight;
+    rows.forEach(r => {
+      r.style.transition = ''; r.style.willChange = '';
+      r.classList.remove('sort-dragging', 'sort-drop', 'sort-sibling');
+    });
+    document.body.classList.remove('sorting');
+  }
+
+  function onMove(ev) {
+    if (finished) return;
+    lastY = ev.clientY;
+    if (!started) { if (Math.abs(lastY - startY) < 4) return; begin(); }
+    ev.preventDefault();
+    update();
+  }
+  function onUp() { settle(true); }
+  function onCancel() { settle(false); }
+  function onKey(ev) { if (ev.key === 'Escape') settle(false); }
+
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onCancel);
+  window.addEventListener('keydown', onKey);
+}
+/* SORTABLE END */
 
 function buildEcgSegment(offsetX, period, spikeHeight, jitter) {
   const y = 30;
@@ -803,6 +977,7 @@ function setItemText(item, val) {
   else { item.ref.text = val; Store.saveBrand(item.brand); }
 }
 function setItemDate(item, iso) {
+  delete item.ref.order;
   if (item.kind === 'todo') { item.ref.date = iso; Store.saveTodos(); }
   else { item.ref.due = iso || ''; Store.saveBrand(item.brand); }
 }
@@ -817,7 +992,7 @@ function renderTodoRows(container, items, showTag, editable) {
     row.className = 'todo-row';
     row.dataset.itemId = item.ref.id;
     row.innerHTML = `
-      ${editable ? `<div class="drag-handle" title="Drag to reorder">⠿</div>` : ''}
+      ${editable ? `<div class="drag-handle" title="Drag to reorder">${GRIP_SVG}</div>` : ''}
       <div class="check"></div>
       <div style="flex:1; min-width:0;"><div class="todo-title">${title}</div>${sub ? `<div class="todo-project-sub">${sub}</div>` : ''}</div>
       ${item.overdue ? `<div class="todo-due">Overdue</div>` : ''}
@@ -829,25 +1004,6 @@ function renderTodoRows(container, items, showTag, editable) {
       const kebab = buildKebabMenu(row, []);
       kebab.setActions(baseKebabActionsFor(item, kebab, row));
       row.addEventListener('contextmenu', (e) => { e.preventDefault(); kebab.openAt(e.clientX, e.clientY); });
-      row.draggable = true;
-      row.addEventListener('dragstart', (e) => {
-        if (e.target.closest('input, .check, .kebab-menu')) { e.preventDefault(); return; }
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', item.ref.id);
-        setTimeout(() => row.classList.add('dragging'), 0);
-      });
-      row.addEventListener('dragend', () => row.classList.remove('dragging'));
-      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
-      row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
-      row.addEventListener('drop', (e) => {
-        e.preventDefault();
-        row.classList.remove('drag-over');
-        const draggedId = e.dataTransfer.getData('text/plain');
-        if (!draggedId) return;
-        reorderItems(items, draggedId, item.ref.id, (it) => it.ref.id);
-        clickTick();
-        navigate('todo');
-      });
     }
     container.appendChild(row);
   });
@@ -1012,6 +1168,10 @@ function renderDailyTodoDay() {
 
   const { active, done } = itemsForDate(state.selectedDate);
   renderTodoRows(document.getElementById('activeList'), active, true, true);
+  makeSortable(document.getElementById('activeList'), {
+    handle: '.drag-handle',
+    onReorder: (ids) => { const map = new Map(active.map(it => [it.ref.id, it])); persistOrder(ids.map(id => map.get(id)).filter(Boolean)); }
+  });
 
   const doneContainer = document.getElementById('doneList');
   if (!done.length) { doneContainer.innerHTML = `<div style="padding:12px 20px; font-size:12.5px; color:var(--text-dim);">Nothing completed for this day yet.</div>`; }
@@ -1038,9 +1198,8 @@ function renderDailyTodoDay() {
       const row = document.createElement('div');
       row.className = 'todo-row';
       row.dataset.itemId = item.ref.id;
-      row.draggable = true;
       row.innerHTML = `
-        <div class="drag-handle" title="Drag to reorder">⠿</div>
+        <div class="drag-handle" title="Drag to reorder">${GRIP_SVG}</div>
         <div class="check"></div>
         <div class="todo-title" style="flex:1; min-width:0;"></div>
         <div class="quick-date-actions">
@@ -1056,31 +1215,11 @@ function renderDailyTodoDay() {
       row.querySelector('[data-a="tomorrow"]').addEventListener('click', () => { t.date = fmt(addDays(todayISO(), 1)); Store.saveTodos(); clickTick(); navigate('todo'); });
       createDatePicker(row.querySelector('.qd-pick-slot'), null, (iso) => { t.date = iso; Store.saveTodos(); clickTick(); navigate('todo'); });
       row.querySelector('.icon-btn').addEventListener('click', () => deleteTodoItem(item));
-      row.addEventListener('dragstart', (e) => {
-        if (e.target.closest('input, .check, .icon-btn, .date-picker, button')) { e.preventDefault(); return; }
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', t.id);
-        setTimeout(() => row.classList.add('dragging'), 0);
-      });
-      row.addEventListener('dragend', () => row.classList.remove('dragging'));
-      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
-      row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
-      row.addEventListener('drop', (e) => {
-        e.preventDefault();
-        row.classList.remove('drag-over');
-        const draggedId = e.dataTransfer.getData('text/plain');
-        if (!draggedId) return;
-        const fromIdx = unscheduled.findIndex(x => x.id === draggedId);
-        const toIdx = unscheduled.findIndex(x => x.id === t.id);
-        if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-        const [moved] = unscheduled.splice(fromIdx, 1);
-        unscheduled.splice(toIdx, 0, moved);
-        unscheduled.forEach((x, idx) => x.order = idx);
-        Store.saveTodos();
-        clickTick();
-        navigate('todo');
-      });
       unschedContainer.appendChild(row);
+    });
+    makeSortable(unschedContainer, {
+      handle: '.drag-handle',
+      onReorder: (ids) => { const map = new Map(unscheduled.map(t => [t.id, t])); persistOrder(ids.map(id => map.get(id)).filter(Boolean)); }
     });
   }
 }
@@ -1514,7 +1653,7 @@ function renderTaskTracker() {
         row.dataset.subId = s.id;
         row.innerHTML = `
           <div class="subtask-main">
-            <div class="drag-handle" title="Drag to reorder">⠿</div>
+            <div class="drag-handle" title="Drag to reorder">${GRIP_SVG}</div>
             <div class="subtask-check" style="background:${s.done ? 'var(--accent)' : 'transparent'}; border-color:${s.done ? 'var(--accent)' : ''};">${s.done ? '✓' : ''}</div>
             <input type="text" class="subtask-text-input" value="${s.text.replace(/"/g, '&quot;')}">
             <button class="icon-btn" title="Delete subtask">×</button>
