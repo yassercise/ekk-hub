@@ -1,9 +1,16 @@
-const CACHE_NAME = 'ekk-hub-v2';
+const CACHE_NAME = 'ekk-hub-v3';
 const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png', './infinity-logo.png'];
 
+// Pre-cache the shell for offline use. 'reload' skips the browser's HTTP cache so we never store a stale copy.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(APP_SHELL.map((url) =>
+        fetch(new Request(url, { cache: 'reload' }))
+          .then((res) => (res.ok ? cache.put(url, res) : null))
+          .catch(() => null)
+      ))
+    )
   );
   self.skipWaiting();
 });
@@ -17,19 +24,27 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Network-first: always fetch the latest version when online, so edits
-// show up immediately. Only fall back to the cached copy when offline.
+// Network-first, and genuinely fresh: 'no-store' bypasses the browser HTTP cache
+// (GitHub Pages tells browsers to cache for 10 minutes, which made updates look like they never arrived).
+// The cached copy is only used when offline.
+function freshFetch(req) {
+  return fetch(req, { cache: 'no-store' }).catch(() => fetch(req));
+}
+
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  event.respondWith(
+    freshFetch(req)
+      .then((response) => {
+        if (response && response.ok) {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-  }
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(req))
+  );
 });
