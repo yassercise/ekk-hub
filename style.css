@@ -684,3 +684,9 @@ body.sorting .todo-row:not(.sort-dragging):hover { background: transparent; }
 .pulse-monitor.tier-stable #pulseSvg { animation-duration: 2.6s; }
 .pulse-monitor.tier-stable #pulsePath { stroke: #16A863; filter: drop-shadow(0 0 3px rgba(22,168,99,0.5)); }
 
+
+/* Inline calendar inside the kebab / right-click menu */
+.kebab-dropdown.wide { width: 244px; }
+.kebab-cal-slot { padding: 4px 4px 2px; }
+.dp-inline * { box-sizing: border-box; outline: none; }
+.dp-inline .dp-grid { justify-content: space-between; }

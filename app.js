@@ -692,15 +692,25 @@ function buildKebabMenu(container, actions) {
     dd.style.top = top + 'px';
     dd.style.right = 'auto';
   }
+  function clampToViewport() {
+    if (dd.style.position !== 'fixed') return;
+    const r = dd.getBoundingClientRect();
+    let left = parseFloat(dd.style.left) || r.left, top = parseFloat(dd.style.top) || r.top;
+    if (left + r.width > window.innerWidth - 8) left = window.innerWidth - r.width - 8;
+    if (top + r.height > window.innerHeight - 8) top = window.innerHeight - r.height - 8;
+    dd.style.left = Math.max(8, left) + 'px';
+    dd.style.top = Math.max(8, top) + 'px';
+  }
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
-    else { openExclusive(() => dd.classList.remove('open'), () => { positionDropdown(); dd.classList.add('open'); }); }
+    else { openExclusive(() => { dd.classList.remove('open'); dd.classList.remove('wide'); }, () => { positionDropdown(); dd.classList.add('open'); }); }
   });
-  document.addEventListener('click', () => dd.classList.remove('open'));
+  document.addEventListener('click', () => { dd.classList.remove('open'); dd.classList.remove('wide'); });
   return {
-    close: () => dd.classList.remove('open'),
-    setActions: renderActions,
+    close: () => { dd.classList.remove('open'); dd.classList.remove('wide'); },
+    setActions: (list) => { renderActions(list); clampToViewport(); },
+    reposition: () => clampToViewport(),
     dd,
     open: () => { positionDropdown(); dd.classList.add('open'); },
     openAt: (x, y) => {
@@ -1009,11 +1019,49 @@ function renderTodoRows(container, items, showTag, editable) {
   });
 }
 
+// Always-visible calendar rendered straight into a container (no popup, nothing to open).
+function buildInlineCalendar(container, onPick) {
+  let viewMonth = new Date();
+  container.innerHTML = `
+    <div class="dp-inline">
+      <div class="dp-header"><div class="dp-nav" role="button" tabindex="0" data-dir="-1">‹</div><div class="dp-month-label"></div><div class="dp-nav" role="button" tabindex="0" data-dir="1">›</div></div>
+      <div class="dp-grid"></div>
+      <div class="dp-footer"><div class="dp-today-btn" role="button" tabindex="0">Today</div></div>
+    </div>`;
+  const grid = container.querySelector('.dp-grid'), monthLabel = container.querySelector('.dp-month-label');
+  const act = (el, fn) => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); fn(); } });
+  };
+  function render() {
+    monthLabel.textContent = viewMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    grid.innerHTML = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { const el = document.createElement('div'); el.className = 'dp-dow'; el.textContent = d; grid.appendChild(el); });
+    const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+    const days = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < first.getDay(); i++) grid.appendChild(document.createElement('div'));
+    for (let d = 1; d <= days; d++) {
+      const iso = fmt(new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d));
+      const cell = document.createElement('div');
+      cell.setAttribute('role', 'button'); cell.tabIndex = 0;
+      cell.className = 'dp-day' + (iso === todayISO() ? ' is-today' : '');
+      cell.textContent = d;
+      act(cell, () => onPick(iso));
+      grid.appendChild(cell);
+    }
+  }
+  container.querySelectorAll('.dp-nav').forEach(nb => act(nb, () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + parseInt(nb.dataset.dir, 10), 1); render(); }));
+  act(container.querySelector('.dp-today-btn'), () => onPick(todayISO()));
+  render();
+}
+
 function openPickDateMenu(kebab, item) {
-  kebab.dd.innerHTML = `<button type="button" class="kebab-item back" id="kebabBackBtn">← Back</button><div id="kebabDateSlot" style="padding:2px 0;"></div>`;
-  document.getElementById('kebabBackBtn').addEventListener('click', (e) => { e.stopPropagation(); kebab.setActions(baseKebabActionsFor(item, kebab)); });
-  createDatePicker(document.getElementById('kebabDateSlot'), null, (iso) => { setItemDate(item, iso); clickTick(); navigate('todo'); });
-  document.querySelector('#kebabDateSlot .date-picker-btn').click();
+  const dd = kebab.dd;
+  dd.classList.add('wide');
+  dd.innerHTML = `<button type="button" class="kebab-item back">← Back</button><div class="kebab-cal-slot"></div>`;
+  dd.querySelector('.kebab-item.back').addEventListener('click', (e) => { e.stopPropagation(); dd.classList.remove('wide'); kebab.setActions(baseKebabActionsFor(item, kebab)); });
+  buildInlineCalendar(dd.querySelector('.kebab-cal-slot'), (iso) => { kebab.close(); kebab.setActions(baseKebabActionsFor(item, kebab)); setItemDate(item, iso); clickTick(); navigate('todo'); });
+  kebab.reposition && kebab.reposition();
 }
 
 function openBrandAssignMenu(kebab, item) {
@@ -1449,10 +1497,19 @@ function mountPriorityPicker(container, t, onChange) {
     if (left + ddRect.width > window.innerWidth - 8) left = window.innerWidth - ddRect.width - 8;
     dd.style.position = 'fixed'; dd.style.left = left + 'px'; dd.style.top = top + 'px'; dd.style.right = 'auto';
   }
+  function clampToViewport() {
+    if (dd.style.position !== 'fixed') return;
+    const r = dd.getBoundingClientRect();
+    let left = parseFloat(dd.style.left) || r.left, top = parseFloat(dd.style.top) || r.top;
+    if (left + r.width > window.innerWidth - 8) left = window.innerWidth - r.width - 8;
+    if (top + r.height > window.innerHeight - 8) top = window.innerHeight - r.height - 8;
+    dd.style.left = Math.max(8, left) + 'px';
+    dd.style.top = Math.max(8, top) + 'px';
+  }
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (dd.classList.contains('open')) { dd.classList.remove('open'); activePopoverClose = null; }
-    else { openExclusive(() => dd.classList.remove('open'), () => { positionDropdown(); dd.classList.add('open'); }); }
+    else { openExclusive(() => { dd.classList.remove('open'); dd.classList.remove('wide'); }, () => { positionDropdown(); dd.classList.add('open'); }); }
   });
   document.addEventListener('click', () => dd.classList.remove('open'));
 }
