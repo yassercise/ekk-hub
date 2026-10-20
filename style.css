@@ -690,3 +690,12 @@ body.sorting .todo-row:not(.sort-dragging):hover { background: transparent; }
 .kebab-cal-slot { padding: 4px 4px 2px; }
 .dp-inline * { box-sizing: border-box; outline: none; }
 .dp-inline .dp-grid { justify-content: space-between; }
+
+/* Reorderable project rows */
+.campaign-row { position: relative; }
+.campaign-row > .project-grip { position: absolute; left: 2px; top: 50%; margin: -15px 0 0 0; opacity: 0; transition: opacity 180ms ease, color 220ms ease, background 220ms ease; }
+.campaign-row:hover > .project-grip, body.sorting .campaign-row > .project-grip, .campaign-row > .project-grip:focus-visible { opacity: 1; }
+@media (hover: none) { .campaign-row > .project-grip { opacity: 1; } }
+body.sorting .campaign-row:not(.sort-dragging):hover { background: transparent; }
+.campaign-row.sort-dragging { z-index: 60; background: var(--card); box-shadow: 0 20px 44px rgba(20,22,27,0.16), 0 4px 12px rgba(20,22,27,0.08); }
+.campaign-row.sort-dragging.sort-drop { box-shadow: 0 0 0 rgba(20,22,27,0); }
